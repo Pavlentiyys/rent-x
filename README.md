@@ -5,11 +5,28 @@
 ![Anchor](https://img.shields.io/badge/Anchor-0.32.0-FFA500)
 ![Rust](https://img.shields.io/badge/Rust-1.83+-orange?logo=rust&logoColor=white)
 ![Node](https://img.shields.io/badge/Node.js-18-green?logo=node.js&logoColor=white)
-![Build](https://img.shields.io/badge/build-passing-brightgreen)
+![Status](https://img.shields.io/badge/status-in%20development-yellow)
 
 > Decentralized fast rental platform built on Solana blockchain
 
-RentX — Web 3.0 платформа быстрой аренды на блокчейне Solana. Пользователь проходит верификацию один раз, выбирает товар, подписывает транзакцию кошельком — и аренда оформлена. Залог блокируется в escrow смарт-контракта и возвращается автоматически при возврате товара.
+## Problem
+
+Рынок краткосрочной аренды физических вещей — электроники, инструментов, спортивного оборудования — работает через посредников: агрегаторы, арендные сервисы, доски объявлений. Это создаёт три системные проблемы:
+
+**Риск мошенничества.** Арендатор платит залог наличными или переводом — и ничто не гарантирует его возврат. Владелец отдаёт вещь — и ничто не гарантирует оплату. Стороны вынуждены доверять незнакомцу или дорогостоящему посреднику.
+
+**Непрозрачность.** Условия аренды фиксируются в мессенджере или на бумаге. Нет единой истории операций, нет проверяемой репутации участников, нет защиты при споре.
+
+**Высокие издержки.** Платформы-посредники берут 15–30% комиссии. Эквайринг, страховка, call-центр — всё это ложится в цену и делает микроаренду экономически нецелесообразной.
+
+## Solution
+
+RentX переносит логику доверия на блокчейн Solana. Смарт-контракт заменяет посредника:
+
+- **KYC on-chain** — верификация проходится один раз и записывается в `UserProfile` PDA. Любой участник рынка может проверить статус контрагента без обращения к третьей стороне.
+- **Escrow без посредника** — при аренде залог и оплата блокируются в `RentalAgreement` PDA. Деньги недоступны ни арендатору, ни владельцу до завершения сделки — только смарт-контракт управляет их распределением.
+- **Автоматический расчёт** — при подтверждении возврата контракт мгновенно отправляет залог арендатору и оплату владельцу. Без ручных переводов, без задержек, без споров о "я уже отправил".
+- **Репутация как актив** — каждая завершённая аренда инкрементирует `total_rentals` в профиле. Репутация накапливается on-chain и не принадлежит платформе.
 
 ---
 
@@ -77,71 +94,6 @@ rentx/
     ├── package.json
     ├── tsconfig.json
     └── rentx.ts
-```
-
----
-
-## Smart Contract
-
-### Accounts (PDAs)
-
-```rust
-// On-chain KYC + reputation record
-// seeds: ["user", owner]
-UserProfile {
-    owner: Pubkey,
-    is_verified: bool,
-    verified_at: i64,
-    total_rentals: u32,
-    bump: u8,
-}
-
-// Rental item listing created by owner
-// seeds: ["listing", owner, item_name]
-RentalListing {
-    owner: Pubkey,
-    item_name: String,      // max 64 chars, used as PDA seed
-    description: String,    // max 256 chars
-    price_per_day: u64,     // lamports
-    deposit_amount: u64,    // lamports
-    category: String,       // max 32 chars
-    is_available: bool,
-    created_at: i64,
-    bump: u8,
-}
-
-// Escrow holding deposit + rental fee
-// seeds: ["rental", renter, listing]
-RentalAgreement {
-    renter: Pubkey,
-    listing: Pubkey,
-    owner: Pubkey,
-    start_time: i64,
-    end_time: i64,
-    deposit_amount: u64,
-    rental_fee: u64,
-    total_paid: u64,
-    status: RentalStatus,   // Active | Completed | Cancelled
-    bump: u8,
-}
-```
-
-### Instructions
-
-| Instruction | Signer | Description |
-|------------|--------|-------------|
-| `initialize_user` | user | Создать UserProfile PDA |
-| `verify_user` | platform | Подтвердить KYC пользователя |
-| `create_listing` | owner | Добавить товар в каталог |
-| `rent_item` | renter | Заблокировать залог + оплату в escrow |
-| `return_item` | platform / owner | Подтвердить возврат, распределить средства |
-
-### Escrow Flow
-
-```
-rent_item:   renter → RentalAgreement (deposit + rental_fee locked)
-return_item: RentalAgreement → renter (deposit back)
-             RentalAgreement → owner  (rental_fee)
 ```
 
 ---
