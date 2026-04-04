@@ -10,6 +10,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreateFileUploadDto = void 0;
+const swagger_1 = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
 class CreateFileUploadDto {
     fileName;
@@ -18,15 +19,18 @@ class CreateFileUploadDto {
 }
 exports.CreateFileUploadDto = CreateFileUploadDto;
 __decorate([
+    (0, swagger_1.ApiProperty)({ example: 'camera.jpg' }),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreateFileUploadDto.prototype, "fileName", void 0);
 __decorate([
+    (0, swagger_1.ApiProperty)({ example: 'image/jpeg' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.Matches)(/^[\w!#$&^.-]+\/[\w!#$&^.+-]+$/),
     __metadata("design:type", String)
 ], CreateFileUploadDto.prototype, "contentType", void 0);
 __decorate([
+    (0, swagger_1.ApiProperty)({ example: 524288 }),
     (0, class_validator_1.IsInt)(),
     (0, class_validator_1.Min)(1),
     (0, class_validator_1.Max)(10 * 1024 * 1024),

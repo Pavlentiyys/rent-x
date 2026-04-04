@@ -1,3 +1,4 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   serializeUserProfile,
   UserProfileResponseDto,
@@ -7,36 +8,81 @@ import { PostImage } from '../entities/post-image.entity';
 import { Post } from '../entities/post.entity';
 
 export class PostAttributeResponseDto {
+  @ApiProperty()
   id: number;
+  @ApiProperty()
   key: string;
+  @ApiProperty()
   value: string;
+  @ApiProperty()
   type: string;
 }
 
 export class PostImageResponseDto {
+  @ApiProperty()
   id: number;
+  @ApiProperty()
   objectKey: string;
+  @ApiProperty()
   url: string;
+  @ApiProperty()
   sortOrder: number;
 }
 
 export class PostResponseDto {
+  @ApiProperty()
   id: number;
+  @ApiProperty()
   title: string;
+  @ApiProperty()
   description: string;
+  @ApiProperty()
   category: string;
+  @ApiProperty()
   pricePerDay: string;
+  @ApiProperty()
   depositAmount: string;
+  @ApiProperty()
   currencyMint: string;
+  @ApiPropertyOptional({ nullable: true })
   location: string | null;
+  @ApiProperty()
   status: string;
+  @ApiPropertyOptional({ nullable: true })
   availableFrom: string | null;
+  @ApiPropertyOptional({ nullable: true })
   availableTo: string | null;
+  @ApiPropertyOptional({ type: UserProfileResponseDto, nullable: true })
   owner: UserProfileResponseDto | null;
+
+  @ApiProperty({ type: [PostAttributeResponseDto] })
   attributes: PostAttributeResponseDto[];
+
+  @ApiProperty({ type: [PostImageResponseDto] })
   images: PostImageResponseDto[];
+
+  @ApiProperty()
   createdAt: string;
+
+  @ApiProperty()
   updatedAt: string;
+}
+
+export class PaginatedPostsResponseDto {
+  @ApiProperty({ type: [PostResponseDto] })
+  items: PostResponseDto[];
+
+  @ApiProperty()
+  total: number;
+
+  @ApiProperty()
+  page: number;
+
+  @ApiProperty()
+  limit: number;
+
+  @ApiProperty()
+  totalPages: number;
 }
 
 export function serializePost(post: Post): PostResponseDto {

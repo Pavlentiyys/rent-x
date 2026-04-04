@@ -1,3 +1,4 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   serializeUserProfile,
   UserProfileResponseDto,
@@ -7,34 +8,60 @@ import { RentEvent } from '../entities/rent-event.entity';
 import { Rent } from '../entities/rent.entity';
 
 export class RentEventResponseDto {
+  @ApiProperty()
   id: number;
+  @ApiProperty()
   type: string;
+  @ApiPropertyOptional({ nullable: true })
   payload: Record<string, unknown> | null;
+  @ApiProperty()
   createdAt: string;
 }
 
 export class RentResponseDto {
+  @ApiProperty()
   id: number;
+  @ApiProperty()
   startDate: string;
+  @ApiProperty()
   endDate: string;
+  @ApiProperty()
   daysCount: number;
+  @ApiProperty()
   pricePerDay: string;
+  @ApiProperty()
   rentAmount: string;
+  @ApiProperty()
   depositAmount: string;
+  @ApiProperty()
   platformFeeAmount: string;
+  @ApiProperty()
   totalAmount: string;
+  @ApiProperty()
   currencyMint: string;
+  @ApiPropertyOptional({ nullable: true })
   paymentTxSignature: string | null;
+  @ApiPropertyOptional({ nullable: true })
   depositTxSignature: string | null;
+  @ApiPropertyOptional({ nullable: true })
   returnTxSignature: string | null;
+  @ApiProperty()
   status: string;
+  @ApiPropertyOptional({ nullable: true })
   cancelReason: string | null;
+  @ApiPropertyOptional({ type: PostResponseDto, nullable: true })
   post: PostResponseDto | null;
+  @ApiPropertyOptional({ type: UserProfileResponseDto, nullable: true })
   owner: UserProfileResponseDto | null;
+  @ApiPropertyOptional({ type: UserProfileResponseDto, nullable: true })
   renter: UserProfileResponseDto | null;
+  @ApiProperty()
   reviewsCount: number;
+  @ApiProperty({ type: [RentEventResponseDto] })
   events: RentEventResponseDto[];
+  @ApiProperty()
   createdAt: string;
+  @ApiProperty()
   updatedAt: string;
 }
 

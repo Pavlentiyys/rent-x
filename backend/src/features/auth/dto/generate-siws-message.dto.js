@@ -10,12 +10,14 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.GenerateSiwsMessageDto = void 0;
+const swagger_1 = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
 class GenerateSiwsMessageDto {
     wallet;
 }
 exports.GenerateSiwsMessageDto = GenerateSiwsMessageDto;
 __decorate([
+    (0, swagger_1.ApiProperty)({ example: '7YyZgM3j2g8G1V4qkQYJx9hQW3s9bL1u2x6R7t8p9Qa' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.Matches)(/^[1-9A-HJ-NP-Za-km-z]{32,44}$/),
     __metadata("design:type", String)

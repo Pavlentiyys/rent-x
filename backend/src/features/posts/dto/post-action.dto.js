@@ -10,12 +10,14 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PostActionDto = void 0;
+const swagger_1 = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
 class PostActionDto {
     reason;
 }
 exports.PostActionDto = PostActionDto;
 __decorate([
+    (0, swagger_1.ApiPropertyOptional)({ example: 'Temporarily unavailable' }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.Length)(1, 500),

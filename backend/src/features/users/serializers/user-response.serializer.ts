@@ -1,19 +1,40 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { User } from '../entities/user.entity';
 
 export class UserProfileResponseDto {
+  @ApiProperty()
   id: number;
+
+  @ApiPropertyOptional({ nullable: true })
   username: string | null;
+
+  @ApiPropertyOptional({ nullable: true })
   displayName: string | null;
+
+  @ApiPropertyOptional({ nullable: true })
   avatarUrl: string | null;
+
+  @ApiPropertyOptional({ nullable: true })
   bio: string | null;
+
+  @ApiProperty()
   rating: number;
+
+  @ApiProperty()
   reviewsCount: number;
+
+  @ApiProperty()
   isVerified: boolean;
+
+  @ApiProperty()
   createdAt: string;
+
+  @ApiProperty()
   updatedAt: string;
 }
 
 export class CurrentUserResponseDto extends UserProfileResponseDto {
+  @ApiProperty()
   walletAddress: string;
 }
 
