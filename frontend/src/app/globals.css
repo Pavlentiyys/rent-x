@@ -1,0 +1,141 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ─── Light mode ─── */
+:root {
+  --page-bg:    #FFFFFF;
+  --main-bg:    #F5F7FF;
+  --hero-bg:    #ffffff;
+
+  --text-1:     #0A0D1F;
+  --text-2:     rgba(10,13,31,0.55);
+  --text-3:     rgba(10,13,31,0.4);
+  --text-4:     rgba(10,13,31,0.25);
+
+  /* White card */
+  --surface:    #FFFFFF;
+  --surface-2:  #F4F6FF;
+  --border:     rgba(0,0,0,0.07);
+  --border-2:   rgba(0,0,0,0.04);
+  --divider:    rgba(0,0,0,0.07);
+
+  /* Light card shadow (replaces glass blur) */
+  --card-shadow:  0 2px 8px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
+  --card-blur:    none;
+  --card-saturate: 100%;
+
+  --header-pill-bg:     rgba(255,255,255,0.97);
+  --header-pill-shadow: 0 2px 16px rgba(0,0,0,0.10), 0 1px 4px rgba(0,0,0,0.06);
+  --header-pill-border: transparent;
+}
+
+/* ─── Dark mode — Apple liquid glass ─── */
+.dark {
+  --page-bg:    #05080F;
+  --main-bg:    #0A0D1A;
+  --hero-bg:    #05080F;
+
+  --text-1:     #FFFFFF;
+  --text-2:     rgba(255, 255, 255, 0.55);
+  --text-3:     rgba(255, 255, 255, 0.4);
+  --text-4:     rgba(255, 255, 255, 0.25);
+
+  /* Apple liquid glass */
+  --surface:    rgba(255,255,255,0.09);
+  --surface-2:  rgba(255,255,255,0.14);
+  --border:     rgba(255,255,255,0.13);
+  --border-2:   rgba(255,255,255,0.07);
+  --divider:    rgba(255,255,255,0.07);
+
+  --card-shadow:   0 8px 32px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.12);
+  --card-blur:     blur(20px);
+  --card-saturate: saturate(180%);
+
+  --header-pill-bg:     rgba(28,32,58,0.82);
+  --header-pill-shadow: 0 4px 24px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
+  --header-pill-border: rgba(255,255,255,0.12);
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--page-bg);
+  color: var(--text-1);
+}
+
+/* ─── Keyframes ─── */
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-12px); }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0.6; }
+  50%       { opacity: 1; }
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes marquee-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@keyframes orb-a {
+  0%   { transform: translate(0px,   0px)  scale(1);    }
+  25%  { transform: translate(60px, -40px) scale(1.08); }
+  50%  { transform: translate(20px, -80px) scale(0.95); }
+  75%  { transform: translate(-50px,-30px) scale(1.05); }
+  100% { transform: translate(0px,   0px)  scale(1);    }
+}
+
+@keyframes orb-b {
+  0%   { transform: translate(0px,  0px)  scale(1);    }
+  25%  { transform: translate(-70px,30px) scale(1.06); }
+  50%  { transform: translate(-30px,70px) scale(0.94); }
+  75%  { transform: translate(55px, 40px) scale(1.08); }
+  100% { transform: translate(0px,  0px)  scale(1);    }
+}
+
+@keyframes orb-c {
+  0%   { transform: translate(0px, 0px)   scale(1);    }
+  33%  { transform: translate(40px,50px)  scale(1.1);  }
+  66%  { transform: translate(-40px,20px) scale(0.9);  }
+  100% { transform: translate(0px, 0px)   scale(1);    }
+}
+
+@keyframes aurora {
+  0%   { transform: rotate(0deg)   scale(1);    opacity: 0.55; }
+  33%  { transform: rotate(120deg) scale(1.08); opacity: 0.7;  }
+  66%  { transform: rotate(240deg) scale(0.96); opacity: 0.5;  }
+  100% { transform: rotate(360deg) scale(1);    opacity: 0.55; }
+}
+
+/* Light mode — tone down aurora/orbs */
+:root .animate-aurora  { animation: aurora 20s linear infinite; opacity: 0.18; }
+:root .animate-orb-a   { animation: orb-a  18s ease-in-out infinite; opacity: 0.18; }
+:root .animate-orb-b   { animation: orb-b  22s ease-in-out infinite; opacity: 0.14; }
+:root .animate-orb-c   { animation: orb-c  14s ease-in-out infinite; opacity: 0.22; }
+
+.dark .animate-aurora  { animation: aurora 20s linear infinite; }
+.dark .animate-orb-a   { animation: orb-a  18s ease-in-out infinite; }
+.dark .animate-orb-b   { animation: orb-b  22s ease-in-out infinite; }
+.dark .animate-orb-c   { animation: orb-c  14s ease-in-out infinite; }
+
+/* ─── Utilities ─── */
+
+.animate-float      { animation: float 4s ease-in-out infinite; }
+.animate-float-slow { animation: float 6s ease-in-out infinite; }
+.animate-fade-up    { animation: fade-up 0.6s ease-out both; }
+.animate-marquee    { animation: marquee-scroll 60s linear infinite; }
+.animate-marquee:hover { animation-play-state: paused; }
+
+.mask-fade-edges {
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%);
+  mask-image:         linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%);
+}
