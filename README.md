@@ -1,4 +1,11 @@
-# RentX 🔑
+# RentX
+
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![Solana](https://img.shields.io/badge/Solana-Devnet-9945FF?logo=solana&logoColor=white)
+![Anchor](https://img.shields.io/badge/Anchor-0.32.0-FFA500)
+![Rust](https://img.shields.io/badge/Rust-1.83+-orange?logo=rust&logoColor=white)
+![Node](https://img.shields.io/badge/Node.js-18-green?logo=node.js&logoColor=white)
+![Build](https://img.shields.io/badge/build-passing-brightgreen)
 
 > Decentralized fast rental platform built on Solana blockchain
 
@@ -6,172 +13,215 @@ RentX — Web 3.0 платформа быстрой аренды на блокч
 
 ---
 
-## 🚀 Tech Stack
+## Why Solana?
+
+Аренда — это транзакционно насыщенный бизнес: каждый листинг, каждая бронь, каждый возврат залога — отдельная операция. Выбор блокчейна здесь критичен.
+
+| Критерий | Solana | Ethereum | BNB Chain |
+|----------|--------|----------|-----------|
+| Скорость подтверждения | ~400 мс | 12–60 с | 3–5 с |
+| Комиссия за транзакцию | ~$0.00025 | $1–50+ | $0.05–0.5 |
+| Пропускная способность | 65 000 TPS | ~15 TPS | ~100 TPS |
+| Стоимость аккаунта (rent) | ~0.002 SOL | — | — |
+| Экосистема DeFi / NFT | Высокая | Очень высокая | Средняя |
+
+**Конкретные причины для RentX:**
+
+- **Мгновенные транзакции** — пользователь подписывает аренду и видит подтверждение быстрее, чем открывается следующий экран. На Ethereum ждать 30+ секунд неприемлемо для кассового сценария.
+- **Микроплатежи без потерь** — залог 0.5 SOL и оплата за 1 день аренды — это реальные суммы. Комиссия $0.00025 не съедает маржу. На Ethereum комиссия может превышать стоимость аренды.
+- **PDA как нативный escrow** — Program Derived Addresses позволяют держать залог прямо на адресе смарт-контракта без оракулов и внешних мультисигов. Это встроено в архитектуру Solana, а не надстройка.
+- **Низкий порог входа для пользователя** — Phantom, Backpack, Solflare — кошельки с понятным UX. Solana Pay позволит в будущем принимать оплату QR-кодом прямо на точке выдачи.
+
+---
+
+## Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
 | Frontend | Next.js 14 (App Router) |
 | Backend | NestJS + PostgreSQL |
-| Smart Contract | Rust + Anchor Framework |
-| Blockchain | Solana (Devnet / Mainnet-beta) |
+| Smart Contract | Rust + Anchor 0.32 |
+| Blockchain | Solana (Devnet / Localnet) |
 | Wallet | Phantom, Backpack, Solflare |
-| Web3 Client | @solana/web3.js + @coral-xyz/anchor |
+| Web3 Client | @solana/kit + @coral-xyz/anchor |
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 rentx/
-├── frontend/          # Next.js app
-│   ├── app/
-│   ├── components/
-│   └── lib/
-├── backend/           # NestJS API
-│   ├── src/
-│   │   ├── users/
-│   │   ├── listings/
-│   │   └── rentals/
-│   └── prisma/
-└── program/           # Rust Anchor smart contract
-    ├── programs/
-    │   └── rentx/
-    │       └── src/
-    │           └── lib.rs
-    └── tests/
+├── frontend/               # Next.js app
+│   └── app/
+├── backend/                # NestJS API
+│   └── src/
+├── programs/               # Anchor workspace root
+│   ├── Anchor.toml
+│   ├── Cargo.toml
+│   └── rentx/
+│       └── src/
+│           ├── lib.rs
+│           ├── constants.rs
+│           ├── errors.rs
+│           ├── state/
+│           │   ├── user_profile.rs
+│           │   ├── rental_listing.rs
+│           │   └── rental_agreement.rs
+│           └── instructions/
+│               ├── initialize_user.rs
+│               ├── verify_user.rs
+│               ├── create_listing.rs
+│               ├── rent_item.rs
+│               └── return_item.rs
+└── tests/                  # TypeScript test suite
+    ├── package.json
+    ├── tsconfig.json
+    └── rentx.ts
 ```
 
 ---
 
-## ⚙️ Smart Contract
+## Smart Contract
 
-### Accounts
+### Accounts (PDAs)
 
 ```rust
-// User verification status
-UserProfile PDA {
+// On-chain KYC + reputation record
+// seeds: ["user", owner]
+UserProfile {
+    owner: Pubkey,
     is_verified: bool,
     verified_at: i64,
     total_rentals: u32,
+    bump: u8,
 }
 
-// Rental item listing
-RentalListing PDA {
+// Rental item listing created by owner
+// seeds: ["listing", owner, item_name]
+RentalListing {
     owner: Pubkey,
-    item_name: String,
-    price_per_day: u64,   // in lamports (SOL)
-    deposit_amount: u64,  // in lamports (SOL)
+    item_name: String,      // max 64 chars, used as PDA seed
+    description: String,    // max 256 chars
+    price_per_day: u64,     // lamports
+    deposit_amount: u64,    // lamports
+    category: String,       // max 32 chars
     is_available: bool,
+    created_at: i64,
+    bump: u8,
 }
 
-// Active rental agreement
-RentalAgreement PDA {
+// Escrow holding deposit + rental fee
+// seeds: ["rental", renter, listing]
+RentalAgreement {
     renter: Pubkey,
     listing: Pubkey,
+    owner: Pubkey,
     start_time: i64,
     end_time: i64,
-    deposit_vault: Pubkey,
-    status: RentalStatus,  // Active | Completed | Disputed
+    deposit_amount: u64,
+    rental_fee: u64,
+    total_paid: u64,
+    status: RentalStatus,   // Active | Completed | Cancelled
+    bump: u8,
 }
 ```
 
 ### Instructions
 
-| Instruction | Description |
-|------------|-------------|
-| `initialize_user` | Create user profile on-chain |
-| `verify_user` | Platform sets `is_verified = true` |
-| `create_listing` | Owner adds item to catalog |
-| `rent_item` | Renter locks deposit in escrow |
-| `return_item` | Operator confirms return, deposit released |
+| Instruction | Signer | Description |
+|------------|--------|-------------|
+| `initialize_user` | user | Создать UserProfile PDA |
+| `verify_user` | platform | Подтвердить KYC пользователя |
+| `create_listing` | owner | Добавить товар в каталог |
+| `rent_item` | renter | Заблокировать залог + оплату в escrow |
+| `return_item` | platform / owner | Подтвердить возврат, распределить средства |
+
+### Escrow Flow
+
+```
+rent_item:   renter → RentalAgreement (deposit + rental_fee locked)
+return_item: RentalAgreement → renter (deposit back)
+             RentalAgreement → owner  (rental_fee)
+```
 
 ---
 
-## 🛠️ Getting Started
+## Getting Started
 
 ### Prerequisites
 
-- Node.js >= 18
+- Node.js 18 (использует `.nvmrc`)
 - Rust + Cargo
-- Solana CLI
-- Anchor CLI
-- PostgreSQL
+- Solana CLI 2.x
+- Anchor CLI 0.32
+
+```bash
+nvm use   # автоматически подхватит Node 18
+```
 
 ### Installation
 
 ```bash
-# Clone the repo
 git clone https://github.com/your-username/rentx.git
 cd rentx
 
-# Install frontend dependencies
+# Зависимости фронтенда
 cd frontend && npm install
 
-# Install backend dependencies
+# Зависимости бэкенда
 cd ../backend && npm install
 
-# Build Anchor program
-cd ../program && anchor build
+# Зависимости тестов
+cd ../tests && yarn install
+
+# Сборка смарт-контракта
+cd ../programs && anchor build
 ```
 
 ### Environment Variables
 
-**frontend/.env.local**
-```env
-NEXT_PUBLIC_RPC_URL=https://api.devnet.solana.com
-NEXT_PUBLIC_PROGRAM_ID=YOUR_PROGRAM_ID
-NEXT_PUBLIC_API_URL=http://localhost:3001
-```
 
-**backend/.env**
-```env
-DATABASE_URL=postgresql://user:password@localhost:5432/rentx
-SOLANA_RPC_URL=https://api.devnet.solana.com
-PROGRAM_ID=YOUR_PROGRAM_ID
-OPERATOR_KEYPAIR_PATH=./keypair.json
-```
 
-### Running Locally
+### Running Tests (Localnet)
 
 ```bash
-# Start local Solana validator
-solana-test-validator
+cd programs
+anchor test -- --features test-mode
+```
 
-# Deploy program to devnet
-cd program && anchor deploy --provider.cluster devnet
+Anchor автоматически запустит локальный валидатор, задеплоит программу и прогонит тесты.
 
-# Start backend
-cd backend && npm run start:dev
+### Deploy to Devnet
 
-# Start frontend
-cd frontend && npm run dev
+```bash
+cd programs
+anchor build
+anchor deploy --provider.cluster devnet
 ```
 
 ---
 
-## 🔄 User Flow
+## User Flow
 
 ```
 1. Connect Phantom wallet (Sign-In with Solana)
         ↓
-2. Upload documents → KYC verification → is_verified = true (on-chain)
+2. Upload documents → KYC → platform calls verify_user → is_verified = true
         ↓
 3. Browse catalog → Select item → View price in SOL + deposit
         ↓
-4. Click "Rent" → Confirm transaction in Phantom
+4. Click "Rent" → sign transaction → rent_item locks funds in escrow
         ↓
-5. Deposit + payment locked in RentalAgreement escrow
+5. Deposit + rental fee locked in RentalAgreement PDA
         ↓
-6. Visit pickup point → Operator signs with their wallet
+6. Visit pickup point → operator/owner signs return_item
         ↓
-7. Return item → Operator calls return_item
-        ↓
-8. Deposit auto-returned to renter ✅  |  Payment sent to owner ✅
+7. Deposit auto-returned to renter  |  Rental fee sent to owner
 ```
 
 ---
 
-## 🌐 Deployment
+## Deployment
 
 | Service | Platform |
 |---------|----------|
@@ -182,13 +232,19 @@ cd frontend && npm run dev
 
 ---
 
-## 🏆 Hackathon
+## Hackathon
 
 Built for **Decentrathon — National Solana Hackathon 2025**
 Case: Tokenization of Real-World Assets on Solana
 
 ---
 
-## 📄 License
+## Contributing
 
-MIT
+See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+---
+
+## License
+
+MIT — see [LICENSE](LICENSE).

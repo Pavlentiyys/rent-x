@@ -1,0 +1,55 @@
+# ── Rust / Anchor ────────────────────────────────────────────────────────────
+target/
+**/*.rs.bk
+.anchor/
+test-ledger/
+
+# Cargo.lock lives in programs/ — commit it for reproducible builds
+# Uncomment to ignore:
+# programs/Cargo.lock
+
+# ── Anchor build artifacts ───────────────────────────────────────────────────
+programs/**/*.so
+programs/target/
+
+# ── Node / JS ────────────────────────────────────────────────────────────────
+node_modules/
+tests/node_modules/
+.pnp
+.pnp.js
+
+# ── Next.js ──────────────────────────────────────────────────────────────────
+frontend/.next/
+frontend/out/
+frontend/.vercel
+
+# ── NestJS / backend ─────────────────────────────────────────────────────────
+backend/dist/
+backend/.env
+
+# ── Environment ──────────────────────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+
+# ── Solana keypairs — never commit ───────────────────────────────────────────
+*.json
+!Anchor.toml
+!programs/Anchor.toml
+!programs/rentx/Cargo.toml
+!tests/package.json
+!tests/tsconfig.json
+!tests/yarn.lock
+!frontend/package.json
+!frontend/tsconfig.json
+!backend/package.json
+!backend/tsconfig.json
+
+# ── macOS ────────────────────────────────────────────────────────────────────
+.DS_Store
+
+# ── Editor ───────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
