@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { validateEnvironment } from './config/environment.validation';
 import { AuthModule } from './features/auth/auth.module';
 import { FilesModule } from './features/files/files.module';
 import { PaymentsModule } from './features/payments/payments.module';
@@ -8,12 +9,14 @@ import { PostsModule } from './features/posts/posts.module';
 import { RentsModule } from './features/rents/rents.module';
 import { ReviewsModule } from './features/reviews/reviews.module';
 import { UsersModule } from './features/users/users.module';
+import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
+      validate: validateEnvironment,
     }),
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
@@ -36,6 +39,7 @@ import { UsersModule } from './features/users/users.module';
     RentsModule,
     ReviewsModule,
     UsersModule,
+    HealthModule,
   ],
   controllers: [],
   providers: [],

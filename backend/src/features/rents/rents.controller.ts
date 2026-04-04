@@ -17,6 +17,10 @@ import { DisputeRentDto } from './dto/dispute-rent.dto';
 import { RejectRentDto } from './dto/reject-rent.dto';
 import { RentReasonDto } from './dto/rent-reason.dto';
 import { RentsService } from './rents.service';
+import {
+  serializeRent,
+  serializeRentList,
+} from './serializers/rent-response.serializer';
 
 @Controller('rents')
 @UseGuards(JwtAuthGuard)
@@ -25,12 +29,12 @@ export class RentsController {
 
   @Post()
   create(@Body() dto: CreateRentDto, @CurrentUser() currentUser: AuthenticatedUser) {
-    return this.rentsService.create(dto, currentUser.userId);
+    return this.rentsService.create(dto, currentUser.userId).then(serializeRent);
   }
 
   @Get()
   findAll(@CurrentUser() currentUser: AuthenticatedUser) {
-    return this.rentsService.findAll(currentUser.userId);
+    return this.rentsService.findAll(currentUser.userId).then(serializeRentList);
   }
 
   @Get(':id')
@@ -38,7 +42,7 @@ export class RentsController {
     @Param('id', ParseIntPipe) id: number,
     @CurrentUser() currentUser: AuthenticatedUser,
   ) {
-    return this.rentsService.findOne(id, currentUser.userId);
+    return this.rentsService.findOne(id, currentUser.userId).then(serializeRent);
   }
 
   @Post(':id/approve')
@@ -46,7 +50,7 @@ export class RentsController {
     @Param('id', ParseIntPipe) id: number,
     @CurrentUser() currentUser: AuthenticatedUser,
   ) {
-    return this.rentsService.approve(id, currentUser.userId);
+    return this.rentsService.approve(id, currentUser.userId).then(serializeRent);
   }
 
   @Post(':id/reject')
@@ -55,7 +59,9 @@ export class RentsController {
     @Body() dto: RejectRentDto,
     @CurrentUser() currentUser: AuthenticatedUser,
   ) {
-    return this.rentsService.reject(id, dto.reason, currentUser.userId);
+    return this.rentsService
+      .reject(id, dto.reason, currentUser.userId)
+      .then(serializeRent);
   }
 
   @Post(':id/mark-paid')
@@ -63,7 +69,7 @@ export class RentsController {
     @Param('id', ParseIntPipe) id: number,
     @CurrentUser() currentUser: AuthenticatedUser,
   ) {
-    return this.rentsService.markPaid(id, currentUser.userId);
+    return this.rentsService.markPaid(id, currentUser.userId).then(serializeRent);
   }
 
   @Post(':id/handover')
@@ -71,7 +77,7 @@ export class RentsController {
     @Param('id', ParseIntPipe) id: number,
     @CurrentUser() currentUser: AuthenticatedUser,
   ) {
-    return this.rentsService.handover(id, currentUser.userId);
+    return this.rentsService.handover(id, currentUser.userId).then(serializeRent);
   }
 
   @Post(':id/complete')
@@ -79,7 +85,7 @@ export class RentsController {
     @Param('id', ParseIntPipe) id: number,
     @CurrentUser() currentUser: AuthenticatedUser,
   ) {
-    return this.rentsService.complete(id, currentUser.userId);
+    return this.rentsService.complete(id, currentUser.userId).then(serializeRent);
   }
 
   @Post(':id/cancel')
@@ -88,7 +94,7 @@ export class RentsController {
     @Body() dto: RentReasonDto,
     @CurrentUser() currentUser: AuthenticatedUser,
   ) {
-    return this.rentsService.cancel(id, dto.reason, currentUser.userId);
+    return this.rentsService.cancel(id, dto.reason, currentUser.userId).then(serializeRent);
   }
 
   @Post(':id/dispute')
@@ -97,7 +103,7 @@ export class RentsController {
     @Body() dto: DisputeRentDto,
     @CurrentUser() currentUser: AuthenticatedUser,
   ) {
-    return this.rentsService.dispute(id, dto.reason, currentUser.userId);
+    return this.rentsService.dispute(id, dto.reason, currentUser.userId).then(serializeRent);
   }
 
   @Delete(':id')

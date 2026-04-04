@@ -5,6 +5,7 @@ import { GenerateSiwsMessageDto } from './dto/generate-siws-message.dto';
 import { VerifySiwsSignatureDto } from './dto/verify-siws-signature.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import type { AuthenticatedUser } from './interfaces/authenticated-user.interface';
+import { serializeCurrentUser } from '../users/serializers/user-response.serializer';
 
 @Controller('auth')
 export class AuthController {
@@ -26,7 +27,7 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Get('me')
-  me(@CurrentUser() currentUser: AuthenticatedUser) {
-    return this.authService.getMe(currentUser.userId);
+  async me(@CurrentUser() currentUser: AuthenticatedUser) {
+    return serializeCurrentUser(await this.authService.getMe(currentUser.userId));
   }
 }

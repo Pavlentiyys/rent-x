@@ -15,6 +15,10 @@ import type { AuthenticatedUser } from '../auth/interfaces/authenticated-user.in
 import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
 import { ReviewsService } from './reviews.service';
+import {
+  serializeReview,
+  serializeReviewList,
+} from './serializers/review-response.serializer';
 
 @Controller('reviews')
 export class ReviewsController {
@@ -23,17 +27,17 @@ export class ReviewsController {
   @UseGuards(JwtAuthGuard)
   @Post()
   create(@Body() dto: CreateReviewDto, @CurrentUser() currentUser: AuthenticatedUser) {
-    return this.reviewsService.create(dto, currentUser.userId);
+    return this.reviewsService.create(dto, currentUser.userId).then(serializeReview);
   }
 
   @Get()
   findAll() {
-    return this.reviewsService.findAll();
+    return this.reviewsService.findAll().then(serializeReviewList);
   }
 
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.reviewsService.findOne(id);
+    return this.reviewsService.findOne(id).then(serializeReview);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -43,7 +47,7 @@ export class ReviewsController {
     @Body() dto: UpdateReviewDto,
     @CurrentUser() currentUser: AuthenticatedUser,
   ) {
-    return this.reviewsService.update(id, dto, currentUser.userId);
+    return this.reviewsService.update(id, dto, currentUser.userId).then(serializeReview);
   }
 
   @UseGuards(JwtAuthGuard)

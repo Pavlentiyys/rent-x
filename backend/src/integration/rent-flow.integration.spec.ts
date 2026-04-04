@@ -390,6 +390,45 @@ describe('Rent flow integration', () => {
     ).rejects.toBeInstanceOf(ForbiddenException);
   });
 
+  it('rejects handover before verified payments and paid status', async () => {
+    const ownerKeypair = Keypair.generate();
+    const renterKeypair = Keypair.generate();
+
+    const owner = await signIn(ownerKeypair);
+    const renter = await signIn(renterKeypair);
+    const { rent } = await createApprovedRent(owner.id, renter.id);
+
+    await expect(rentsService.handover(rent.id, owner.id)).rejects.toBeInstanceOf(
+      ConflictException,
+    );
+  });
+
+  it('rejects completing a rent before it becomes active', async () => {
+    const ownerKeypair = Keypair.generate();
+    const renterKeypair = Keypair.generate();
+
+    const owner = await signIn(ownerKeypair);
+    const renter = await signIn(renterKeypair);
+    const { rent } = await createApprovedRent(owner.id, renter.id);
+
+    await expect(rentsService.complete(rent.id, owner.id)).rejects.toBeInstanceOf(
+      ConflictException,
+    );
+  });
+
+  it('rejects cancelling an already completed rent', async () => {
+    const ownerKeypair = Keypair.generate();
+    const renterKeypair = Keypair.generate();
+
+    const owner = await signIn(ownerKeypair);
+    const renter = await signIn(renterKeypair);
+    const { rent } = await createCompletedRent(owner, renter);
+
+    await expect(
+      rentsService.cancel(rent.id, 'Too late to cancel', renter.id),
+    ).rejects.toBeInstanceOf(ConflictException);
+  });
+
   async function signIn(keypair: Keypair) {
     const wallet = keypair.publicKey.toBase58();
     const { message } = await authService.generateSiwsMessage(wallet);

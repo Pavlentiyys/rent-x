@@ -18,6 +18,10 @@ import { SearchPostsDto } from './dto/search-posts.dto';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { PostsService } from './posts.service';
+import {
+  serializePaginatedPosts,
+  serializePost,
+} from './serializers/post-response.serializer';
 
 @Controller('posts')
 export class PostsController {
@@ -29,12 +33,12 @@ export class PostsController {
     @Body() dto: CreatePostDto,
     @CurrentUser() currentUser: AuthenticatedUser,
   ) {
-    return this.postsService.create(dto, currentUser.userId);
+    return this.postsService.create(dto, currentUser.userId).then(serializePost);
   }
 
   @Get()
   findAll(@Query() query: SearchPostsDto) {
-    return this.postsService.findAll(query);
+    return this.postsService.findAll(query).then(serializePaginatedPosts);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -43,12 +47,14 @@ export class PostsController {
     @CurrentUser() currentUser: AuthenticatedUser,
     @Query() query: SearchPostsDto,
   ) {
-    return this.postsService.findMine(currentUser.userId, query);
+    return this.postsService
+      .findMine(currentUser.userId, query)
+      .then(serializePaginatedPosts);
   }
 
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.postsService.findOne(id);
+    return this.postsService.findOne(id).then(serializePost);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -58,7 +64,7 @@ export class PostsController {
     @Body() dto: UpdatePostDto,
     @CurrentUser() currentUser: AuthenticatedUser,
   ) {
-    return this.postsService.update(id, dto, currentUser.userId);
+    return this.postsService.update(id, dto, currentUser.userId).then(serializePost);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -67,7 +73,7 @@ export class PostsController {
     @Param('id', ParseIntPipe) id: number,
     @CurrentUser() currentUser: AuthenticatedUser,
   ) {
-    return this.postsService.publish(id, currentUser.userId);
+    return this.postsService.publish(id, currentUser.userId).then(serializePost);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -77,7 +83,7 @@ export class PostsController {
     @Body() dto: PostActionDto,
     @CurrentUser() currentUser: AuthenticatedUser,
   ) {
-    return this.postsService.pause(id, currentUser.userId, dto.reason);
+    return this.postsService.pause(id, currentUser.userId, dto.reason).then(serializePost);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -87,7 +93,9 @@ export class PostsController {
     @Body() dto: PostActionDto,
     @CurrentUser() currentUser: AuthenticatedUser,
   ) {
-    return this.postsService.archive(id, currentUser.userId, dto.reason);
+    return this.postsService
+      .archive(id, currentUser.userId, dto.reason)
+      .then(serializePost);
   }
 
   @UseGuards(JwtAuthGuard)
