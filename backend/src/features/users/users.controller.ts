@@ -6,35 +6,23 @@ import {
   Param,
   ParseIntPipe,
   Patch,
-  Post,
   UseGuards,
 } from '@nestjs/common';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import type { AuthenticatedUser } from '../auth/interfaces/authenticated-user.interface';
 import { UsersService } from './users.service';
-import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import {
   serializeCurrentUser,
   serializeUserProfile,
 } from './serializers/user-response.serializer';
 
-@UseGuards(JwtAuthGuard)
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Post()
-  create(
-    @Body() createUserDto: CreateUserDto,
-    @CurrentUser() currentUser: AuthenticatedUser,
-  ) {
-    return this.usersService
-      .create(createUserDto, currentUser.wallet)
-      .then(serializeCurrentUser);
-  }
-
+  @UseGuards(JwtAuthGuard)
   @Get('me')
   me(@CurrentUser() currentUser: AuthenticatedUser) {
     return this.usersService.findOne(currentUser.userId).then(serializeCurrentUser);
@@ -50,6 +38,7 @@ export class UsersController {
     return this.usersService.findOne(id).then(serializeUserProfile);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Patch('me')
   updateMe(
     @Body() updateUserDto: UpdateUserDto,
@@ -60,6 +49,13 @@ export class UsersController {
       .then(serializeCurrentUser);
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Delete('me')
+  removeMe(@CurrentUser() currentUser: AuthenticatedUser) {
+    return this.usersService.remove(currentUser.userId, currentUser.userId);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Patch(':id')
   update(
     @Param('id', ParseIntPipe) id: number,
@@ -73,6 +69,7 @@ export class UsersController {
       );
   }
 
+  @UseGuards(JwtAuthGuard)
   @Delete(':id')
   remove(
     @Param('id', ParseIntPipe) id: number,
