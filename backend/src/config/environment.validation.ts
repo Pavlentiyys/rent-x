@@ -1,6 +1,15 @@
 type Environment = Record<string, string | undefined>;
 
 export function validateEnvironment(config: Environment) {
+  const normalizedConfig = {
+    PORT: '3000',
+    DATABASE_SYNCHRONIZE: 'true',
+    MINIO_USE_SSL: 'false',
+    SOLANA_RPC_URL: 'https://api.devnet.solana.com',
+    SOLANA_COMMITMENT: 'confirmed',
+    ...config,
+  };
+
   const requiredKeys = [
     'JWT_SECRET',
     'DATABASE_HOST',
@@ -13,25 +22,24 @@ export function validateEnvironment(config: Environment) {
     'MINIO_ACCESS_KEY',
     'MINIO_SECRET_KEY',
     'MINIO_BUCKET',
-    'SOLANA_RPC_URL',
   ];
 
   for (const key of requiredKeys) {
-    const value = config[key]?.trim();
+    const value = normalizedConfig[key]?.trim();
 
     if (!value) {
       throw new Error(`Environment variable ${key} is required`);
     }
   }
 
-  validatePort(config, 'PORT');
-  validatePort(config, 'DATABASE_PORT');
-  validatePort(config, 'MINIO_INTERNAL_PORT');
+  validatePort(normalizedConfig, 'PORT');
+  validatePort(normalizedConfig, 'DATABASE_PORT');
+  validatePort(normalizedConfig, 'MINIO_INTERNAL_PORT');
 
-  validateBoolean(config, 'DATABASE_SYNCHRONIZE');
-  validateBoolean(config, 'MINIO_USE_SSL');
+  validateBoolean(normalizedConfig, 'DATABASE_SYNCHRONIZE');
+  validateBoolean(normalizedConfig, 'MINIO_USE_SSL');
 
-  return config;
+  return normalizedConfig;
 }
 
 function validatePort(config: Environment, key: string) {
