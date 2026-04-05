@@ -11,6 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
+var PaymentsService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PaymentsService = void 0;
 const common_1 = require("@nestjs/common");
@@ -21,11 +22,12 @@ const typeorm_2 = require("typeorm");
 const rents_service_1 = require("../rents/rents.service");
 const rent_event_entity_1 = require("../rents/entities/rent-event.entity");
 const rent_entity_1 = require("../rents/entities/rent.entity");
-let PaymentsService = class PaymentsService {
+let PaymentsService = PaymentsService_1 = class PaymentsService {
     rentsService;
     rentsRepository;
     rentEventsRepository;
     connection;
+    logger = new common_1.Logger(PaymentsService_1.name);
     constructor(configService, rentsService, rentsRepository, rentEventsRepository) {
         this.rentsService = rentsService;
         this.rentsRepository = rentsRepository;
@@ -87,6 +89,14 @@ let PaymentsService = class PaymentsService {
         if (!signerWallets.includes(actorWallet)) {
             throw new common_1.BadRequestException('Authenticated wallet is not a signer of this transaction');
         }
+        this.logger.log(JSON.stringify({
+            event: 'payment.transaction_inspected',
+            signature,
+            actorWallet,
+            slot: transaction.slot,
+            blockTime: transaction.blockTime,
+            signerWallets,
+        }));
         return this.toVerificationResponse(signature, transaction);
     }
     async attachVerifiedTransaction(rent, field, signature, actorUserId, requirement, eventType) {
@@ -117,6 +127,17 @@ let PaymentsService = class PaymentsService {
                 field,
                 matchedTransfer,
             },
+        }));
+        this.logger.log(JSON.stringify({
+            event: eventType,
+            rentId: rent.id,
+            actorUserId,
+            field,
+            signature,
+            slot: transaction.slot,
+            blockTime: transaction.blockTime,
+            signerWallets,
+            matchedTransfer,
         }));
         return {
             rent: await this.rentsService.findOne(rent.id, actorUserId),
@@ -239,7 +260,7 @@ let PaymentsService = class PaymentsService {
     }
 };
 exports.PaymentsService = PaymentsService;
-exports.PaymentsService = PaymentsService = __decorate([
+exports.PaymentsService = PaymentsService = PaymentsService_1 = __decorate([
     (0, common_1.Injectable)(),
     __param(2, (0, typeorm_1.InjectRepository)(rent_entity_1.Rent)),
     __param(3, (0, typeorm_1.InjectRepository)(rent_event_entity_1.RentEvent)),

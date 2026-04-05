@@ -50,7 +50,7 @@ __decorate([
             },
         },
     }),
-    (0, api_common_error_responses_decorator_1.ApiCommonErrorResponses)(400, 401),
+    (0, api_common_error_responses_decorator_1.ApiCommonErrorResponses)(400, 401, 429),
     (0, common_1.Post)('wallet/message'),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -63,7 +63,7 @@ __decorate([
     (0, swagger_1.ApiOkResponse)({
         schema: { properties: { access_token: { type: 'string' } } },
     }),
-    (0, api_common_error_responses_decorator_1.ApiCommonErrorResponses)(400, 401),
+    (0, api_common_error_responses_decorator_1.ApiCommonErrorResponses)(400, 401, 429),
     (0, common_1.Post)('wallet/verify'),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),

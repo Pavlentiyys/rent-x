@@ -4,11 +4,12 @@ import {
   ApiConflictResponse,
   ApiForbiddenResponse,
   ApiNotFoundResponse,
+  ApiTooManyRequestsResponse,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { ApiErrorResponseDto } from '../dto/api-error-response.dto';
 
-type SupportedErrorStatus = 400 | 401 | 403 | 404 | 409;
+type SupportedErrorStatus = 400 | 401 | 403 | 404 | 409 | 429;
 
 export function ApiCommonErrorResponses(...statuses: SupportedErrorStatus[]) {
   const decorators = statuses.map((status) => {
@@ -23,6 +24,8 @@ export function ApiCommonErrorResponses(...statuses: SupportedErrorStatus[]) {
         return ApiNotFoundResponse({ type: ApiErrorResponseDto });
       case 409:
         return ApiConflictResponse({ type: ApiErrorResponseDto });
+      case 429:
+        return ApiTooManyRequestsResponse({ type: ApiErrorResponseDto });
     }
   });
 

@@ -8,6 +8,7 @@ export declare class PaymentsService {
     private readonly rentsRepository;
     private readonly rentEventsRepository;
     private readonly connection;
+    private readonly logger;
     constructor(configService: ConfigService, rentsService: RentsService, rentsRepository: Repository<Rent>, rentEventsRepository: Repository<RentEvent>);
     verifyRentPayment(rentId: number, signature: string, actorUserId: number, actorWallet: string): Promise<{
         rent: Rent;

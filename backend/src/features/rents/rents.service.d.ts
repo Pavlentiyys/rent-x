@@ -9,6 +9,7 @@ export declare class RentsService {
     private readonly rentEventsRepository;
     private readonly postsRepository;
     private readonly usersRepository;
+    private readonly logger;
     constructor(rentsRepository: Repository<Rent>, rentEventsRepository: Repository<RentEvent>, postsRepository: Repository<Post>, usersRepository: Repository<User>);
     create(dto: CreateRentDto, renterId: number): Promise<Rent>;
     findAll(actorUserId: number): Promise<Rent[]>;

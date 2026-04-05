@@ -12,6 +12,7 @@ const config_1 = require("@nestjs/config");
 const typeorm_1 = require("@nestjs/typeorm");
 const request_context_middleware_1 = require("./common/middleware/request-context.middleware");
 const environment_validation_1 = require("./config/environment.validation");
+const auth_rate_limit_middleware_1 = require("./features/auth/middleware/auth-rate-limit.middleware");
 const auth_module_1 = require("./features/auth/auth.module");
 const files_module_1 = require("./features/files/files.module");
 const payments_module_1 = require("./features/payments/payments.module");
@@ -22,10 +23,13 @@ const users_module_1 = require("./features/users/users.module");
 const health_module_1 = require("./health/health.module");
 let AppModule = class AppModule {
     configure(consumer) {
-        consumer.apply(request_context_middleware_1.RequestContextMiddleware).forRoutes({
+        consumer
+            .apply(request_context_middleware_1.RequestContextMiddleware)
+            .forRoutes({
             path: '*',
             method: common_1.RequestMethod.ALL,
         });
+        consumer.apply(auth_rate_limit_middleware_1.AuthRateLimitMiddleware).forRoutes({ path: 'auth/wallet/message', method: common_1.RequestMethod.POST }, { path: 'auth/wallet/verify', method: common_1.RequestMethod.POST });
     }
 };
 exports.AppModule = AppModule;

@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -40,6 +41,7 @@ type ParsedTransfer = {
 @Injectable()
 export class PaymentsService {
   private readonly connection: Connection;
+  private readonly logger = new Logger(PaymentsService.name);
 
   constructor(
     configService: ConfigService,
@@ -170,6 +172,17 @@ export class PaymentsService {
       throw new BadRequestException('Authenticated wallet is not a signer of this transaction');
     }
 
+    this.logger.log(
+      JSON.stringify({
+        event: 'payment.transaction_inspected',
+        signature,
+        actorWallet,
+        slot: transaction.slot,
+        blockTime: transaction.blockTime,
+        signerWallets,
+      }),
+    );
+
     return this.toVerificationResponse(signature, transaction);
   }
 
@@ -217,6 +230,20 @@ export class PaymentsService {
           field,
           matchedTransfer,
         },
+      }),
+    );
+
+    this.logger.log(
+      JSON.stringify({
+        event: eventType,
+        rentId: rent.id,
+        actorUserId,
+        field,
+        signature,
+        slot: transaction.slot,
+        blockTime: transaction.blockTime,
+        signerWallets,
+        matchedTransfer,
       }),
     );
 

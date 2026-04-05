@@ -8,16 +8,18 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var FilesService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.FilesService = void 0;
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
 const minio_1 = require("minio");
-let FilesService = class FilesService {
+let FilesService = FilesService_1 = class FilesService {
     configService;
     client;
     bucketName;
     publicBaseUrl;
+    logger = new common_1.Logger(FilesService_1.name);
     constructor(configService) {
         this.configService = configService;
         const endPoint = this.configService.get('MINIO_ENDPOINT', 'localhost');
@@ -37,11 +39,23 @@ let FilesService = class FilesService {
         const bucketExists = await this.client.bucketExists(this.bucketName);
         if (!bucketExists) {
             await this.client.makeBucket(this.bucketName);
+            this.logger.log(JSON.stringify({
+                event: 'files.bucket_created',
+                bucket: this.bucketName,
+            }));
         }
     }
     async createUploadUrl(dto, ownerId) {
         const objectKey = this.buildObjectKey(dto.fileName, ownerId);
         const uploadUrl = await this.client.presignedPutObject(this.bucketName, objectKey, 15 * 60);
+        this.logger.log(JSON.stringify({
+            event: 'files.upload_url_created',
+            ownerId,
+            bucket: this.bucketName,
+            objectKey,
+            contentType: dto.contentType,
+            size: dto.size,
+        }));
         return {
             bucket: this.bucketName,
             objectKey,
@@ -64,7 +78,7 @@ let FilesService = class FilesService {
     }
 };
 exports.FilesService = FilesService;
-exports.FilesService = FilesService = __decorate([
+exports.FilesService = FilesService = FilesService_1 = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [config_1.ConfigService])
 ], FilesService);

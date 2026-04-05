@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Client as MinioClient } from 'minio';
 import { CreateFileUploadDto } from './dto/create-file-upload.dto';
@@ -8,6 +8,7 @@ export class FilesService implements OnModuleInit {
   private readonly client: MinioClient;
   private readonly bucketName: string;
   private readonly publicBaseUrl: string;
+  private readonly logger = new Logger(FilesService.name);
 
   constructor(private readonly configService: ConfigService) {
     const endPoint = this.configService.get<string>('MINIO_ENDPOINT', 'localhost');
@@ -34,12 +35,29 @@ export class FilesService implements OnModuleInit {
 
     if (!bucketExists) {
       await this.client.makeBucket(this.bucketName);
+      this.logger.log(
+        JSON.stringify({
+          event: 'files.bucket_created',
+          bucket: this.bucketName,
+        }),
+      );
     }
   }
 
   async createUploadUrl(dto: CreateFileUploadDto, ownerId: number) {
     const objectKey = this.buildObjectKey(dto.fileName, ownerId);
     const uploadUrl = await this.client.presignedPutObject(this.bucketName, objectKey, 15 * 60);
+
+    this.logger.log(
+      JSON.stringify({
+        event: 'files.upload_url_created',
+        ownerId,
+        bucket: this.bucketName,
+        objectKey,
+        contentType: dto.contentType,
+        size: dto.size,
+      }),
+    );
 
     return {
       bucket: this.bucketName,

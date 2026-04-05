@@ -11,14 +11,16 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
+var UsersService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UsersService = void 0;
 const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
 const user_entity_1 = require("./entities/user.entity");
-let UsersService = class UsersService {
+let UsersService = UsersService_1 = class UsersService {
     usersRepository;
+    logger = new common_1.Logger(UsersService_1.name);
     constructor(usersRepository) {
         this.usersRepository = usersRepository;
     }
@@ -33,7 +35,14 @@ let UsersService = class UsersService {
             throw new common_1.ConflictException('User with provided wallet or username already exists');
         }
         const user = this.usersRepository.create(createUserDto);
-        return this.usersRepository.save(user);
+        const savedUser = await this.usersRepository.save(user);
+        this.logger.log(JSON.stringify({
+            event: 'user.created',
+            userId: savedUser.id,
+            walletAddress: savedUser.walletAddress,
+            username: savedUser.username,
+        }));
+        return savedUser;
     }
     findAll() {
         return this.usersRepository.find({
@@ -63,7 +72,14 @@ let UsersService = class UsersService {
             }
         }
         this.usersRepository.merge(user, updateUserDto);
-        return this.usersRepository.save(user);
+        const updatedUser = await this.usersRepository.save(user);
+        this.logger.log(JSON.stringify({
+            event: 'user.updated',
+            userId: updatedUser.id,
+            actorUserId,
+            username: updatedUser.username,
+        }));
+        return updatedUser;
     }
     async remove(id, actorUserId) {
         if (id !== actorUserId) {
@@ -71,6 +87,11 @@ let UsersService = class UsersService {
         }
         const user = await this.findOne(id);
         await this.usersRepository.remove(user);
+        this.logger.log(JSON.stringify({
+            event: 'user.deleted',
+            userId: user.id,
+            actorUserId,
+        }));
         return {
             id,
             deleted: true,
@@ -78,7 +99,7 @@ let UsersService = class UsersService {
     }
 };
 exports.UsersService = UsersService;
-exports.UsersService = UsersService = __decorate([
+exports.UsersService = UsersService = UsersService_1 = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, typeorm_1.InjectRepository)(user_entity_1.User)),
     __metadata("design:paramtypes", [typeorm_2.Repository])

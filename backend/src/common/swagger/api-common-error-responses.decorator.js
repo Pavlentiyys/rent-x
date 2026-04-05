@@ -17,6 +17,8 @@ function ApiCommonErrorResponses(...statuses) {
                 return (0, swagger_1.ApiNotFoundResponse)({ type: api_error_response_dto_1.ApiErrorResponseDto });
             case 409:
                 return (0, swagger_1.ApiConflictResponse)({ type: api_error_response_dto_1.ApiErrorResponseDto });
+            case 429:
+                return (0, swagger_1.ApiTooManyRequestsResponse)({ type: api_error_response_dto_1.ApiErrorResponseDto });
         }
     });
     return (0, common_1.applyDecorators)(...decorators);

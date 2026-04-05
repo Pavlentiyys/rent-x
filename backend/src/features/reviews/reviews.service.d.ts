@@ -8,6 +8,7 @@ export declare class ReviewsService {
     private readonly reviewsRepository;
     private readonly rentsRepository;
     private readonly usersRepository;
+    private readonly logger;
     constructor(reviewsRepository: Repository<Review>, rentsRepository: Repository<Rent>, usersRepository: Repository<User>);
     create(dto: CreateReviewDto, authorId: number): Promise<Review>;
     findAll(): Promise<Review[]>;

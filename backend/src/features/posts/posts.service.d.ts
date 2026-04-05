@@ -13,6 +13,7 @@ export declare class PostsService {
     private readonly postImagesRepository;
     private readonly rentsRepository;
     private readonly usersRepository;
+    private readonly logger;
     constructor(postsRepository: Repository<Post>, postAttributesRepository: Repository<PostAttribute>, postImagesRepository: Repository<PostImage>, rentsRepository: Repository<Rent>, usersRepository: Repository<User>);
     create(dto: CreatePostDto, ownerId: number): Promise<Post>;
     findAll(query: SearchPostsDto): Promise<{

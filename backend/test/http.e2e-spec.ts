@@ -12,6 +12,7 @@ import { DataSource } from 'typeorm';
 import { HttpExceptionFilter } from '../src/common/filters/http-exception.filter';
 import { RequestContextMiddleware } from '../src/common/middleware/request-context.middleware';
 import { AuthModule } from '../src/features/auth/auth.module';
+import { AuthRateLimitMiddleware } from '../src/features/auth/middleware/auth-rate-limit.middleware';
 import { WalletSession } from '../src/features/auth/entities/wallet-session.entity';
 import { FilesModule } from '../src/features/files/files.module';
 import { FilesService } from '../src/features/files/files.service';
@@ -124,7 +125,18 @@ describe('HTTP API contracts (e2e)', () => {
 
     app = moduleRef.createNestApplication();
     const requestContextMiddleware = new RequestContextMiddleware();
+    const authRateLimitMiddleware = new AuthRateLimitMiddleware();
     app.use((req, res, next) => requestContextMiddleware.use(req, res, next));
+    app.use((req, res, next) => {
+      if (
+        req.method === 'POST' &&
+        (req.path === '/auth/wallet/message' || req.path === '/auth/wallet/verify')
+      ) {
+        return authRateLimitMiddleware.use(req, res, next);
+      }
+
+      next();
+    });
     app.useGlobalFilters(new HttpExceptionFilter());
     app.useGlobalPipes(
       new ValidationPipe({
@@ -136,6 +148,10 @@ describe('HTTP API contracts (e2e)', () => {
 
     await app.init();
     paymentsService = app.get(PaymentsService);
+  });
+
+  beforeEach(() => {
+    AuthRateLimitMiddleware.reset();
   });
 
   afterAll(async () => {
@@ -182,6 +198,32 @@ describe('HTTP API contracts (e2e)', () => {
       }),
     );
     expect(response.headers['x-request-id']).toBe(response.body.requestId);
+  });
+
+  it('rate limits repeated auth wallet message requests', async () => {
+    const wallet = Keypair.generate().publicKey.toBase58();
+
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      await request(app.getHttpServer())
+        .post('/auth/wallet/message')
+        .send({ wallet })
+        .expect(201);
+    }
+
+    const response = await request(app.getHttpServer())
+      .post('/auth/wallet/message')
+      .send({ wallet })
+      .expect(429);
+
+    expect(response.body).toEqual(
+      expect.objectContaining({
+        statusCode: 429,
+        error: 'Too Many Requests',
+        path: '/auth/wallet/message',
+        requestId: expect.any(String),
+        timestamp: expect.any(String),
+      }),
+    );
   });
 
   it('returns current user with wallet and public user without wallet', async () => {
@@ -473,6 +515,125 @@ describe('HTTP API contracts (e2e)', () => {
     );
   });
 
+  it('forbids renter from approving their own rent request', async () => {
+    const owner = await signInViaHttp();
+    const renter = await signInViaHttp();
+    const pendingRent = await createPendingRentViaHttp(owner, renter);
+
+    const response = await request(app.getHttpServer())
+      .post(`/rents/${pendingRent.body.id}/approve`)
+      .set('Authorization', `Bearer ${renter.accessToken}`)
+      .expect(403);
+
+    expect(response.body).toEqual(
+      expect.objectContaining({
+        statusCode: 403,
+        error: 'Forbidden',
+        message: 'Only the rent owner can perform this action',
+        path: `/rents/${pendingRent.body.id}/approve`,
+        requestId: expect.any(String),
+      }),
+    );
+  });
+
+  it('forbids owner from marking rent as paid', async () => {
+    const owner = await signInViaHttp();
+    const renter = await signInViaHttp();
+    const approvedRent = await createApprovedRentViaHttp(owner, renter);
+
+    const response = await request(app.getHttpServer())
+      .post(`/rents/${approvedRent.body.id}/mark-paid`)
+      .set('Authorization', `Bearer ${owner.accessToken}`)
+      .expect(403);
+
+    expect(response.body).toEqual(
+      expect.objectContaining({
+        statusCode: 403,
+        error: 'Forbidden',
+        message: 'Only the renter can perform this action',
+        path: `/rents/${approvedRent.body.id}/mark-paid`,
+        requestId: expect.any(String),
+      }),
+    );
+  });
+
+  it('rejects completing rent before it becomes active', async () => {
+    const owner = await signInViaHttp();
+    const renter = await signInViaHttp();
+    const approvedRent = await createApprovedRentViaHttp(owner, renter);
+
+    const response = await request(app.getHttpServer())
+      .post(`/rents/${approvedRent.body.id}/complete`)
+      .set('Authorization', `Bearer ${owner.accessToken}`)
+      .expect(409);
+
+    expect(response.body).toEqual(
+      expect.objectContaining({
+        statusCode: 409,
+        error: 'Conflict',
+        message: 'Only active or disputed rents can be completed',
+        path: `/rents/${approvedRent.body.id}/complete`,
+        requestId: expect.any(String),
+      }),
+    );
+  });
+
+  it('rejects review before completed rent and forbids deleting another user review', async () => {
+    const owner = await signInViaHttp();
+    const renter = await signInViaHttp();
+    const outsider = await signInViaHttp();
+    const approvedRent = await createApprovedRentViaHttp(owner, renter);
+
+    const earlyReviewResponse = await request(app.getHttpServer())
+      .post('/reviews')
+      .set('Authorization', `Bearer ${renter.accessToken}`)
+      .send({
+        rentId: approvedRent.body.id,
+        targetUserId: owner.userId,
+        rating: 5,
+        comment: 'Too early',
+      })
+      .expect(409);
+
+    expect(earlyReviewResponse.body).toEqual(
+      expect.objectContaining({
+        statusCode: 409,
+        error: 'Conflict',
+        message: 'Review can only be created for completed rent',
+        path: '/reviews',
+        requestId: expect.any(String),
+      }),
+    );
+
+    const completedRent = await completeRentViaHttp(owner, renter);
+
+    const reviewResponse = await request(app.getHttpServer())
+      .post('/reviews')
+      .set('Authorization', `Bearer ${renter.accessToken}`)
+      .send({
+        rentId: completedRent.body.id,
+        targetUserId: owner.userId,
+        rating: 5,
+        comment: 'Great owner',
+      })
+      .expect(201);
+
+    const deleteResponse = await request(app.getHttpServer())
+      .delete(`/reviews/${reviewResponse.body.id}`)
+      .set('Authorization', `Bearer ${outsider.accessToken}`)
+      .expect(403);
+
+    expect(deleteResponse.body).toEqual(
+      expect.objectContaining({
+        statusCode: 403,
+        error: 'Forbidden',
+        message: 'Only the review author can remove this review',
+        path: `/reviews/${reviewResponse.body.id}`,
+        requestId: expect.any(String),
+      }),
+    );
+  });
+
   async function signInViaHttp() {
     const keypair = Keypair.generate();
     const wallet = keypair.publicKey.toBase58();
@@ -508,7 +669,7 @@ describe('HTTP API contracts (e2e)', () => {
     };
   }
 
-  async function createApprovedRentViaHttp(
+  async function createPendingRentViaHttp(
     owner: { accessToken: string; userId: number },
     renter: { accessToken: string; userId: number },
   ) {
@@ -536,7 +697,7 @@ describe('HTTP API contracts (e2e)', () => {
       .set('Authorization', `Bearer ${owner.accessToken}`)
       .expect(201);
 
-    const createRentResponse = await request(app.getHttpServer())
+    return request(app.getHttpServer())
       .post('/rents')
       .set('Authorization', `Bearer ${renter.accessToken}`)
       .send({
@@ -545,6 +706,13 @@ describe('HTTP API contracts (e2e)', () => {
         endDate: '2026-04-17',
       })
       .expect(201);
+  }
+
+  async function createApprovedRentViaHttp(
+    owner: { accessToken: string; userId: number },
+    renter: { accessToken: string; userId: number },
+  ) {
+    const createRentResponse = await createPendingRentViaHttp(owner, renter);
 
     await request(app.getHttpServer())
       .post(`/rents/${createRentResponse.body.id}/approve`)
@@ -552,6 +720,63 @@ describe('HTTP API contracts (e2e)', () => {
       .expect(201);
 
     return createRentResponse;
+  }
+
+  async function completeRentViaHttp(
+    owner: { accessToken: string; userId: number; wallet: string },
+    renter: { accessToken: string; userId: number; wallet: string },
+  ) {
+    const approvedRent = await createApprovedRentViaHttp(owner, renter);
+    const rentId = approvedRent.body.id;
+    const rentPaymentSignature = `complete-rent-tx-${rentId}-111111111111111111111111111111`;
+    const depositPaymentSignature = `complete-deposit-tx-${rentId}-2222222222222222222222222222`;
+
+    mockParsedTransactions(
+      paymentsService,
+      new Map([
+        [
+          rentPaymentSignature,
+          createParsedTransaction(renter.wallet, {
+            mint: 'So11111111111111111111111111111111111111112',
+            amount: '33.000000',
+          }),
+        ],
+        [
+          depositPaymentSignature,
+          createParsedTransaction(renter.wallet, {
+            mint: 'So11111111111111111111111111111111111111112',
+            amount: '30.000000',
+          }),
+        ],
+      ]),
+    );
+
+    await request(app.getHttpServer())
+      .post(`/payments/rents/${rentId}/rent`)
+      .set('Authorization', `Bearer ${renter.accessToken}`)
+      .send({ signature: rentPaymentSignature })
+      .expect(201);
+
+    await request(app.getHttpServer())
+      .post(`/payments/rents/${rentId}/deposit`)
+      .set('Authorization', `Bearer ${renter.accessToken}`)
+      .send({ signature: depositPaymentSignature })
+      .expect(201);
+
+    await request(app.getHttpServer())
+      .post(`/rents/${rentId}/mark-paid`)
+      .set('Authorization', `Bearer ${renter.accessToken}`)
+      .expect(201);
+
+    await request(app.getHttpServer())
+      .post(`/rents/${rentId}/handover`)
+      .set('Authorization', `Bearer ${owner.accessToken}`)
+      .expect(201);
+
+    return request(app.getHttpServer())
+      .post(`/rents/${rentId}/complete`)
+      .set('Authorization', `Bearer ${owner.accessToken}`)
+      .expect(201);
   }
 
   function mockParsedTransactions(

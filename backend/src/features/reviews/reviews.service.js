@@ -11,6 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
+var ReviewsService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ReviewsService = void 0;
 const common_1 = require("@nestjs/common");
@@ -19,10 +20,11 @@ const typeorm_2 = require("typeorm");
 const rent_entity_1 = require("../rents/entities/rent.entity");
 const user_entity_1 = require("../users/entities/user.entity");
 const review_entity_1 = require("./entities/review.entity");
-let ReviewsService = class ReviewsService {
+let ReviewsService = ReviewsService_1 = class ReviewsService {
     reviewsRepository;
     rentsRepository;
     usersRepository;
+    logger = new common_1.Logger(ReviewsService_1.name);
     constructor(reviewsRepository, rentsRepository, usersRepository) {
         this.reviewsRepository = reviewsRepository;
         this.rentsRepository = rentsRepository;
@@ -60,6 +62,15 @@ let ReviewsService = class ReviewsService {
             comment: dto.comment ?? null,
         }));
         await this.recalculateUserRating(dto.targetUserId);
+        this.logger.log(JSON.stringify({
+            event: 'review.created',
+            reviewId: review.id,
+            rentId: review.rentId,
+            postId: review.postId,
+            authorId,
+            targetUserId: review.targetUserId,
+            rating: review.rating,
+        }));
         return this.findOne(review.id);
     }
     findAll() {
@@ -101,6 +112,13 @@ let ReviewsService = class ReviewsService {
         });
         await this.reviewsRepository.save(review);
         await this.recalculateUserRating(review.targetUserId);
+        this.logger.log(JSON.stringify({
+            event: 'review.updated',
+            reviewId: review.id,
+            actorUserId,
+            targetUserId: review.targetUserId,
+            rating: review.rating,
+        }));
         return this.findOne(id);
     }
     async remove(id, actorUserId) {
@@ -111,6 +129,12 @@ let ReviewsService = class ReviewsService {
         const targetUserId = review.targetUserId;
         await this.reviewsRepository.remove(review);
         await this.recalculateUserRating(targetUserId);
+        this.logger.log(JSON.stringify({
+            event: 'review.deleted',
+            reviewId: review.id,
+            actorUserId,
+            targetUserId,
+        }));
         return {
             id,
             deleted: true,
@@ -133,7 +157,7 @@ let ReviewsService = class ReviewsService {
     }
 };
 exports.ReviewsService = ReviewsService;
-exports.ReviewsService = ReviewsService = __decorate([
+exports.ReviewsService = ReviewsService = ReviewsService_1 = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, typeorm_1.InjectRepository)(review_entity_1.Review)),
     __param(1, (0, typeorm_1.InjectRepository)(rent_entity_1.Rent)),

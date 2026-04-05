@@ -34,7 +34,7 @@ export class AuthController {
       },
     },
   })
-  @ApiCommonErrorResponses(400, 401)
+  @ApiCommonErrorResponses(400, 401, 429)
   @Post('wallet/message')
   generateSiwsMessage(@Body() dto: GenerateSiwsMessageDto) {
     return this.authService.generateSiwsMessage(dto.wallet);
@@ -45,7 +45,7 @@ export class AuthController {
   @ApiOkResponse({
     schema: { properties: { access_token: { type: 'string' } } },
   })
-  @ApiCommonErrorResponses(400, 401)
+  @ApiCommonErrorResponses(400, 401, 429)
   @Post('wallet/verify')
   verifySiwsSignature(@Body() dto: VerifySiwsSignatureDto) {
     return this.authService.verifySignature(

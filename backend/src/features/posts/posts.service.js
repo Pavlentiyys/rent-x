@@ -11,6 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
+var PostsService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PostsService = void 0;
 const common_1 = require("@nestjs/common");
@@ -28,12 +29,13 @@ const NON_TERMINAL_RENT_STATUSES = [
     rent_entity_1.RentStatus.Active,
     rent_entity_1.RentStatus.Disputed,
 ];
-let PostsService = class PostsService {
+let PostsService = PostsService_1 = class PostsService {
     postsRepository;
     postAttributesRepository;
     postImagesRepository;
     rentsRepository;
     usersRepository;
+    logger = new common_1.Logger(PostsService_1.name);
     constructor(postsRepository, postAttributesRepository, postImagesRepository, rentsRepository, usersRepository) {
         this.postsRepository = postsRepository;
         this.postAttributesRepository = postAttributesRepository;
@@ -88,6 +90,15 @@ let PostsService = class PostsService {
             })));
             await this.postImagesRepository.save(images);
         }
+        this.logger.log(JSON.stringify({
+            event: 'post.created',
+            postId: post.id,
+            ownerId,
+            status: post.status,
+            category: post.category,
+            pricePerDay: post.pricePerDay,
+            depositAmount: post.depositAmount,
+        }));
         return this.findOne(post.id, ownerId);
     }
     async findAll(query) {
@@ -169,6 +180,14 @@ let PostsService = class PostsService {
         if (dto.images) {
             await this.replaceImages(id, dto.images);
         }
+        this.logger.log(JSON.stringify({
+            event: 'post.updated',
+            postId: post.id,
+            actorUserId,
+            status: post.status,
+            title: post.title,
+            category: post.category,
+        }));
         return this.findOne(id, actorUserId);
     }
     async publish(id, actorUserId) {
@@ -183,6 +202,12 @@ let PostsService = class PostsService {
         }
         post.status = post_entity_1.PostStatus.Active;
         await this.postsRepository.save(post);
+        this.logger.log(JSON.stringify({
+            event: 'post.published',
+            postId: post.id,
+            actorUserId,
+            status: post.status,
+        }));
         return this.findOne(id, actorUserId);
     }
     async pause(id, actorUserId, _reason) {
@@ -193,6 +218,12 @@ let PostsService = class PostsService {
         }
         post.status = post_entity_1.PostStatus.Paused;
         await this.postsRepository.save(post);
+        this.logger.log(JSON.stringify({
+            event: 'post.paused',
+            postId: post.id,
+            actorUserId,
+            reason: _reason ?? null,
+        }));
         return this.findOne(id, actorUserId);
     }
     async archive(id, actorUserId, _reason) {
@@ -203,6 +234,12 @@ let PostsService = class PostsService {
         }
         post.status = post_entity_1.PostStatus.Archived;
         await this.postsRepository.save(post);
+        this.logger.log(JSON.stringify({
+            event: 'post.archived',
+            postId: post.id,
+            actorUserId,
+            reason: _reason ?? null,
+        }));
         return this.findOne(id, actorUserId);
     }
     async remove(id, actorUserId) {
@@ -212,6 +249,12 @@ let PostsService = class PostsService {
             throw new common_1.ConflictException('Post with active or pending rents cannot be removed');
         }
         await this.postsRepository.remove(post);
+        this.logger.log(JSON.stringify({
+            event: 'post.deleted',
+            postId: post.id,
+            actorUserId,
+            status: post.status,
+        }));
         return {
             id,
             deleted: true,
@@ -374,7 +417,7 @@ let PostsService = class PostsService {
     }
 };
 exports.PostsService = PostsService;
-exports.PostsService = PostsService = __decorate([
+exports.PostsService = PostsService = PostsService_1 = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, typeorm_1.InjectRepository)(post_entity_1.Post)),
     __param(1, (0, typeorm_1.InjectRepository)(post_attribute_entity_1.PostAttribute)),

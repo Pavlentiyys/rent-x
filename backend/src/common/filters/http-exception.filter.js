@@ -72,6 +72,8 @@ let HttpExceptionFilter = HttpExceptionFilter_1 = class HttpExceptionFilter {
                 return 'Not Found';
             case common_1.HttpStatus.CONFLICT:
                 return 'Conflict';
+            case common_1.HttpStatus.TOO_MANY_REQUESTS:
+                return 'Too Many Requests';
             default:
                 return 'Error';
         }
