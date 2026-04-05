@@ -182,15 +182,21 @@ describe('Rent flow integration', () => {
       new Map([
         [
           'rent-tx-signature-11111111111111111111111111111111',
-          createParsedTransaction(renter.wallet),
+          createParsedTransaction(renter.wallet, {
+            amount: '45.000000',
+          }),
         ],
         [
           'deposit-tx-signature-222222222222222222222222222222',
-          createParsedTransaction(renter.wallet),
+          createParsedTransaction(renter.wallet, {
+            amount: '50.000000',
+          }),
         ],
         [
           'return-tx-signature-3333333333333333333333333333333',
-          createParsedTransaction(owner.wallet),
+          createParsedTransaction(owner.wallet, {
+            amount: '50.000000',
+          }),
         ],
       ]),
     );
@@ -328,7 +334,9 @@ describe('Rent flow integration', () => {
       new Map([
         [
           'shared-signature-11111111111111111111111111111111',
-          createParsedTransaction(renterOne.wallet),
+          createParsedTransaction(renterOne.wallet, {
+            amount: '45.000000',
+          }),
         ],
       ]),
     );
@@ -345,7 +353,9 @@ describe('Rent flow integration', () => {
       new Map([
         [
           'shared-signature-11111111111111111111111111111111',
-          createParsedTransaction(renterTwo.wallet),
+          createParsedTransaction(renterTwo.wallet, {
+            amount: '45.000000',
+          }),
         ],
       ]),
     );
@@ -358,6 +368,62 @@ describe('Rent flow integration', () => {
         renterTwo.wallet,
       ),
     ).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  it('rejects rent payment transaction with wrong mint', async () => {
+    const owner = await signIn(Keypair.generate());
+    const renter = await signIn(Keypair.generate());
+    const { rent } = await createApprovedRent(owner.id, renter.id);
+
+    mockParsedTransactions(
+      paymentsService,
+      new Map([
+        [
+          'wrong-mint-tx-11111111111111111111111111111111',
+          createParsedTransaction(renter.wallet, {
+            mint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+            amount: '45.000000',
+          }),
+        ],
+      ]),
+    );
+
+    await expect(
+      paymentsService.verifyRentPayment(
+        rent.id,
+        'wrong-mint-tx-11111111111111111111111111111111',
+        renter.id,
+        renter.wallet,
+      ),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('rejects rent payment transaction with insufficient amount', async () => {
+    const owner = await signIn(Keypair.generate());
+    const renter = await signIn(Keypair.generate());
+    const { rent } = await createApprovedRent(owner.id, renter.id);
+
+    mockParsedTransactions(
+      paymentsService,
+      new Map([
+        [
+          'insufficient-amount-tx-1111111111111111111111111111',
+          createParsedTransaction(renter.wallet, {
+            mint: 'So11111111111111111111111111111111111111112',
+            amount: '10.000000',
+          }),
+        ],
+      ]),
+    );
+
+    await expect(
+      paymentsService.verifyRentPayment(
+        rent.id,
+        'insufficient-amount-tx-1111111111111111111111111111',
+        renter.id,
+        renter.wallet,
+      ),
+    ).rejects.toBeInstanceOf(BadRequestException);
   });
 
   it('forbids access to another user rent and review modification', async () => {
@@ -501,9 +567,18 @@ describe('Rent flow integration', () => {
     mockParsedTransactions(
       paymentsService,
       new Map([
-        ['completed-rent-tx-1111111111111111111111111111111', createParsedTransaction(renter.wallet)],
-        ['completed-deposit-tx-22222222222222222222222222222', createParsedTransaction(renter.wallet)],
-        ['completed-return-tx-333333333333333333333333333333', createParsedTransaction(owner.wallet)],
+        [
+          'completed-rent-tx-1111111111111111111111111111111',
+          createParsedTransaction(renter.wallet, { amount: '45.000000' }),
+        ],
+        [
+          'completed-deposit-tx-22222222222222222222222222222',
+          createParsedTransaction(renter.wallet, { amount: '50.000000' }),
+        ],
+        [
+          'completed-return-tx-333333333333333333333333333333',
+          createParsedTransaction(owner.wallet, { amount: '50.000000' }),
+        ],
       ]),
     );
 
@@ -550,7 +625,10 @@ function mockParsedTransactions(
   });
 }
 
-function createParsedTransaction(signerWallet: string) {
+function createParsedTransaction(
+  signerWallet: string,
+  options?: { mint?: string; amount?: string },
+) {
   return {
     slot: 123,
     blockTime: 1_744_000_000,
@@ -559,6 +637,24 @@ function createParsedTransaction(signerWallet: string) {
     },
     transaction: {
       message: {
+        instructions: [
+          {
+            program: 'spl-token',
+            parsed: {
+              type: 'transferChecked',
+              info: {
+                authority: signerWallet,
+                source: 'source-token-account',
+                destination: 'destination-token-account',
+                mint:
+                  options?.mint ?? 'So11111111111111111111111111111111111111112',
+                tokenAmount: {
+                  uiAmountString: options?.amount ?? '100.000000',
+                },
+              },
+            },
+          },
+        ],
         accountKeys: [
           {
             pubkey: new PublicKey(signerWallet),

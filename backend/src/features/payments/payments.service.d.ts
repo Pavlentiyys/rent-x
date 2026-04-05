@@ -67,4 +67,8 @@ export declare class PaymentsService {
     private extractSignerWallets;
     private assertSignatureUnused;
     private toVerificationResponse;
+    private findMatchingTransfer;
+    private extractTransfers;
+    private extractTransferAmount;
+    private extractAuthority;
 }
