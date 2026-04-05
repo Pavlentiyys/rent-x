@@ -3,5 +3,6 @@ export declare class ApiErrorResponseDto {
     error: string;
     message: string | string[];
     path: string;
+    requestId: string | null;
     timestamp: string;
 }

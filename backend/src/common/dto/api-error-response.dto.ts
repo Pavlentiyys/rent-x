@@ -18,6 +18,9 @@ export class ApiErrorResponseDto {
   @ApiProperty({ example: '/posts/42' })
   path: string;
 
+  @ApiProperty({ example: '2f8f1aab-5dfd-47b7-8cd4-7b4abf6f39f4', nullable: true })
+  requestId: string | null;
+
   @ApiProperty({ example: '2026-04-05T12:00:00.000Z' })
   timestamp: string;
 }

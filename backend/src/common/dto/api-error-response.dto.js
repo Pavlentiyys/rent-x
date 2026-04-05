@@ -16,6 +16,7 @@ class ApiErrorResponseDto {
     error;
     message;
     path;
+    requestId;
     timestamp;
 }
 exports.ApiErrorResponseDto = ApiErrorResponseDto;
@@ -40,6 +41,10 @@ __decorate([
     (0, swagger_1.ApiProperty)({ example: '/posts/42' }),
     __metadata("design:type", String)
 ], ApiErrorResponseDto.prototype, "path", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ example: '2f8f1aab-5dfd-47b7-8cd4-7b4abf6f39f4', nullable: true }),
+    __metadata("design:type", Object)
+], ApiErrorResponseDto.prototype, "requestId", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ example: '2026-04-05T12:00:00.000Z' }),
     __metadata("design:type", String)

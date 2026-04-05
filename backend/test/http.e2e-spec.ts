@@ -10,6 +10,7 @@ import request from 'supertest';
 import * as nacl from 'tweetnacl';
 import { DataSource } from 'typeorm';
 import { HttpExceptionFilter } from '../src/common/filters/http-exception.filter';
+import { RequestContextMiddleware } from '../src/common/middleware/request-context.middleware';
 import { AuthModule } from '../src/features/auth/auth.module';
 import { WalletSession } from '../src/features/auth/entities/wallet-session.entity';
 import { FilesModule } from '../src/features/files/files.module';
@@ -122,6 +123,8 @@ describe('HTTP API contracts (e2e)', () => {
     const moduleRef = await moduleBuilder.compile();
 
     app = moduleRef.createNestApplication();
+    const requestContextMiddleware = new RequestContextMiddleware();
+    app.use((req, res, next) => requestContextMiddleware.use(req, res, next));
     app.useGlobalFilters(new HttpExceptionFilter());
     app.useGlobalPipes(
       new ValidationPipe({
@@ -156,6 +159,15 @@ describe('HTTP API contracts (e2e)', () => {
     );
   });
 
+  it('preserves client provided x-request-id header', async () => {
+    const response = await request(app.getHttpServer())
+      .get('/health')
+      .set('x-request-id', 'req-test-123')
+      .expect(200);
+
+    expect(response.headers['x-request-id']).toBe('req-test-123');
+  });
+
   it('returns standardized unauthorized error response', async () => {
     const response = await request(app.getHttpServer()).get('/auth/me').expect(401);
 
@@ -165,9 +177,11 @@ describe('HTTP API contracts (e2e)', () => {
         error: 'Unauthorized',
         message: 'Unauthorized',
         path: '/auth/me',
+        requestId: expect.any(String),
         timestamp: expect.any(String),
       }),
     );
+    expect(response.headers['x-request-id']).toBe(response.body.requestId);
   });
 
   it('returns current user with wallet and public user without wallet', async () => {
@@ -289,54 +303,16 @@ describe('HTTP API contracts (e2e)', () => {
   it('executes rent and payments HTTP flow with serialized responses', async () => {
     const owner = await signInViaHttp();
     const renter = await signInViaHttp();
+    const approvedRent = await createApprovedRentViaHttp(owner, renter);
 
-    const createPostResponse = await request(app.getHttpServer())
-      .post('/posts')
-      .set('Authorization', `Bearer ${owner.accessToken}`)
-      .send({
-        title: 'GoPro Hero',
-        description: 'Action camera for rent',
-        category: 'electronics',
-        pricePerDay: '11.000000',
-        depositAmount: '30.000000',
-        currencyMint: 'So11111111111111111111111111111111111111112',
-        images: [
-          {
-            objectKey: `posts/${owner.userId}/gopro.jpg`,
-            url: `https://files.example.com/posts/${owner.userId}/gopro.jpg`,
-          },
-        ],
-      })
-      .expect(201);
-
-    await request(app.getHttpServer())
-      .post(`/posts/${createPostResponse.body.id}/publish`)
-      .set('Authorization', `Bearer ${owner.accessToken}`)
-      .expect(201);
-
-    const createRentResponse = await request(app.getHttpServer())
-      .post('/rents')
-      .set('Authorization', `Bearer ${renter.accessToken}`)
-      .send({
-        postId: createPostResponse.body.id,
-        startDate: '2026-04-15',
-        endDate: '2026-04-17',
-      })
-      .expect(201);
-
-    const rentId = createRentResponse.body.id;
-    expect(createRentResponse.body).toEqual(
+    expect(approvedRent.body).toEqual(
       expect.objectContaining({
         status: 'pending',
         owner: expect.objectContaining({ id: owner.userId }),
         renter: expect.objectContaining({ id: renter.userId }),
       }),
     );
-
-    await request(app.getHttpServer())
-      .post(`/rents/${rentId}/approve`)
-      .set('Authorization', `Bearer ${owner.accessToken}`)
-      .expect(201);
+    const rentId = approvedRent.body.id;
 
     mockParsedTransactions(
       paymentsService,
@@ -391,6 +367,112 @@ describe('HTTP API contracts (e2e)', () => {
     expect(markPaidResponse.body.status).toBe('paid');
   });
 
+  it('returns standardized bad request for wrong signer payment transaction', async () => {
+    const owner = await signInViaHttp();
+    const renter = await signInViaHttp();
+    const outsider = await signInViaHttp();
+    const approvedRent = await createApprovedRentViaHttp(owner, renter);
+
+    mockParsedTransactions(
+      paymentsService,
+      new Map([
+        [
+          'http-wrong-signer-tx-1111111111111111111111111111',
+          createParsedTransaction(outsider.wallet, {
+            mint: 'So11111111111111111111111111111111111111112',
+            amount: '33.000000',
+          }),
+        ],
+      ]),
+    );
+
+    const response = await request(app.getHttpServer())
+      .post(`/payments/rents/${approvedRent.body.id}/rent`)
+      .set('Authorization', `Bearer ${renter.accessToken}`)
+      .send({ signature: 'http-wrong-signer-tx-1111111111111111111111111111' })
+      .expect(400);
+
+    expect(response.body).toEqual(
+      expect.objectContaining({
+        statusCode: 400,
+        error: 'Bad Request',
+        message: 'Authenticated wallet is not a signer of this transaction',
+        path: `/payments/rents/${approvedRent.body.id}/rent`,
+        timestamp: expect.any(String),
+      }),
+    );
+  });
+
+  it('returns standardized bad request for wrong mint payment transaction', async () => {
+    const owner = await signInViaHttp();
+    const renter = await signInViaHttp();
+    const approvedRent = await createApprovedRentViaHttp(owner, renter);
+
+    mockParsedTransactions(
+      paymentsService,
+      new Map([
+        [
+          'http-wrong-mint-tx-111111111111111111111111111111',
+          createParsedTransaction(renter.wallet, {
+            mint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+            amount: '33.000000',
+          }),
+        ],
+      ]),
+    );
+
+    const response = await request(app.getHttpServer())
+      .post(`/payments/rents/${approvedRent.body.id}/rent`)
+      .set('Authorization', `Bearer ${renter.accessToken}`)
+      .send({ signature: 'http-wrong-mint-tx-111111111111111111111111111111' })
+      .expect(400);
+
+    expect(response.body).toEqual(
+      expect.objectContaining({
+        statusCode: 400,
+        error: 'Bad Request',
+        message: 'Transaction does not contain the expected token transfer for this rent',
+        path: `/payments/rents/${approvedRent.body.id}/rent`,
+        timestamp: expect.any(String),
+      }),
+    );
+  });
+
+  it('returns standardized bad request for insufficient payment amount', async () => {
+    const owner = await signInViaHttp();
+    const renter = await signInViaHttp();
+    const approvedRent = await createApprovedRentViaHttp(owner, renter);
+
+    mockParsedTransactions(
+      paymentsService,
+      new Map([
+        [
+          'http-low-amount-tx-111111111111111111111111111111',
+          createParsedTransaction(renter.wallet, {
+            mint: 'So11111111111111111111111111111111111111112',
+            amount: '10.000000',
+          }),
+        ],
+      ]),
+    );
+
+    const response = await request(app.getHttpServer())
+      .post(`/payments/rents/${approvedRent.body.id}/rent`)
+      .set('Authorization', `Bearer ${renter.accessToken}`)
+      .send({ signature: 'http-low-amount-tx-111111111111111111111111111111' })
+      .expect(400);
+
+    expect(response.body).toEqual(
+      expect.objectContaining({
+        statusCode: 400,
+        error: 'Bad Request',
+        message: 'Transaction does not contain the expected token transfer for this rent',
+        path: `/payments/rents/${approvedRent.body.id}/rent`,
+        timestamp: expect.any(String),
+      }),
+    );
+  });
+
   async function signInViaHttp() {
     const keypair = Keypair.generate();
     const wallet = keypair.publicKey.toBase58();
@@ -424,6 +506,52 @@ describe('HTTP API contracts (e2e)', () => {
       userId: payload.sub,
       wallet,
     };
+  }
+
+  async function createApprovedRentViaHttp(
+    owner: { accessToken: string; userId: number },
+    renter: { accessToken: string; userId: number },
+  ) {
+    const createPostResponse = await request(app.getHttpServer())
+      .post('/posts')
+      .set('Authorization', `Bearer ${owner.accessToken}`)
+      .send({
+        title: 'GoPro Hero',
+        description: 'Action camera for rent',
+        category: 'electronics',
+        pricePerDay: '11.000000',
+        depositAmount: '30.000000',
+        currencyMint: 'So11111111111111111111111111111111111111112',
+        images: [
+          {
+            objectKey: `posts/${owner.userId}/gopro.jpg`,
+            url: `https://files.example.com/posts/${owner.userId}/gopro.jpg`,
+          },
+        ],
+      })
+      .expect(201);
+
+    await request(app.getHttpServer())
+      .post(`/posts/${createPostResponse.body.id}/publish`)
+      .set('Authorization', `Bearer ${owner.accessToken}`)
+      .expect(201);
+
+    const createRentResponse = await request(app.getHttpServer())
+      .post('/rents')
+      .set('Authorization', `Bearer ${renter.accessToken}`)
+      .send({
+        postId: createPostResponse.body.id,
+        startDate: '2026-04-15',
+        endDate: '2026-04-17',
+      })
+      .expect(201);
+
+    await request(app.getHttpServer())
+      .post(`/rents/${createRentResponse.body.id}/approve`)
+      .set('Authorization', `Bearer ${owner.accessToken}`)
+      .expect(201);
+
+    return createRentResponse;
   }
 
   function mockParsedTransactions(
