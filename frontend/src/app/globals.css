@@ -2,7 +2,7 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* ─── Light mode ─── */
+/* light mode */
 :root {
   --page-bg:    #FFFFFF;
   --main-bg:    #F5F7FF;
@@ -13,14 +13,14 @@
   --text-3:     rgba(10,13,31,0.4);
   --text-4:     rgba(10,13,31,0.25);
 
-  /* White card */
+  /* white card */
   --surface:    #FFFFFF;
   --surface-2:  #F4F6FF;
   --border:     rgba(0,0,0,0.07);
   --border-2:   rgba(0,0,0,0.04);
   --divider:    rgba(0,0,0,0.07);
 
-  /* Light card shadow (replaces glass blur) */
+  /* light card shadow (replaces glass blur) */
   --card-shadow:  0 2px 8px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
   --card-blur:    none;
   --card-saturate: 100%;
@@ -30,7 +30,7 @@
   --header-pill-border: transparent;
 }
 
-/* ─── Dark mode — Apple liquid glass ─── */
+/* dark mode liquid glass */
 .dark {
   --page-bg:    #05080F;
   --main-bg:    #0A0D1A;
@@ -41,7 +41,7 @@
   --text-3:     rgba(255, 255, 255, 0.4);
   --text-4:     rgba(255, 255, 255, 0.25);
 
-  /* Apple liquid glass */
+  /* liquid glass */
   --surface:    rgba(255,255,255,0.09);
   --surface-2:  rgba(255,255,255,0.14);
   --border:     rgba(255,255,255,0.13);
@@ -64,7 +64,7 @@ body {
   color: var(--text-1);
 }
 
-/* ─── Keyframes ─── */
+/* keyframes */
 
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
@@ -116,7 +116,7 @@ body {
   100% { transform: rotate(360deg) scale(1);    opacity: 0.55; }
 }
 
-/* Light mode — tone down aurora/orbs */
+/* light mode tone down aurora/orbs */
 :root .animate-aurora  { animation: aurora 20s linear infinite; opacity: 0.18; }
 :root .animate-orb-a   { animation: orb-a  18s ease-in-out infinite; opacity: 0.18; }
 :root .animate-orb-b   { animation: orb-b  22s ease-in-out infinite; opacity: 0.14; }
@@ -127,7 +127,7 @@ body {
 .dark .animate-orb-b   { animation: orb-b  22s ease-in-out infinite; }
 .dark .animate-orb-c   { animation: orb-c  14s ease-in-out infinite; }
 
-/* ─── Utilities ─── */
+/* utilities */
 
 .animate-float      { animation: float 4s ease-in-out infinite; }
 .animate-float-slow { animation: float 6s ease-in-out infinite; }
