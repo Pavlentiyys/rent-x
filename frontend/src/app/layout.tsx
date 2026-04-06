@@ -1,6 +1,6 @@
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
-import { SolanaProviders } from "@/components/ui/SolanaProviders";
+import { SolanaProviders } from "./providers";
 import { WalletProvider } from "@/components/ui/WalletContext";
 import { WalletConnectModal } from "@/components/ui/WalletConnectModal";
 import type { Metadata } from "next";
@@ -19,8 +19,8 @@ export default function RootLayout({
   return (
     <html lang="ru" suppressHydrationWarning>
       <head>
-        {/* Prevent dark-mode flash before React hydrates */}
         <script
+          suppressHydrationWarning
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var t=localStorage.getItem('rentx-theme')||'dark';if(t==='dark')document.documentElement.classList.add('dark');}catch(e){}})();`,
           }}

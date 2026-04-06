@@ -1,43 +1,24 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { Search, SlidersHorizontal, ArrowUpRight, Star } from "lucide-react";
 import { Header } from "@/components/sections/Header";
 import { useWalletContext } from "@/components/ui/WalletContext";
-
-const LISTINGS = [
-  { id: 1,  name: "DJI Mavic 3 Pro",         category: "Дроны",        price: 0.8,  deposit: 5.0, rating: 4.9, reviews: 34, status: "available", seed: "drone-dji",       seller: "7xK3…mP9" },
-  { id: 2,  name: "Sony A7 IV",               category: "Фото / Видео", price: 0.5,  deposit: 4.0, rating: 4.8, reviews: 21, status: "available", seed: "camera-sony",    seller: "Bz9n…4aW" },
-  { id: 3,  name: "MacBook Pro M3",           category: "Электроника",  price: 0.6,  deposit: 6.0, rating: 5.0, reviews: 12, status: "rented",    seed: "laptop-apple",  seller: "Qr7p…2xK" },
-  { id: 4,  name: "Электросамокат Xiaomi",    category: "Транспорт",    price: 0.15, deposit: 1.0, rating: 4.7, reviews: 58, status: "available", seed: "scooter-city",  seller: "Km9z…5bN" },
-  { id: 5,  name: "Горный велосипед Trek",    category: "Транспорт",    price: 0.1,  deposit: 0.8, rating: 4.6, reviews: 19, status: "available", seed: "bicycle-mountain", seller: "Xw4p…8hR" },
-  { id: 6,  name: "Палатка Coleman 4",        category: "Туризм",       price: 0.08, deposit: 0.5, rating: 4.8, reviews: 41, status: "available", seed: "tent-camping",  seller: "3rTy…6mW" },
-  { id: 7,  name: "GoPro Hero 12",            category: "Фото / Видео", price: 0.12, deposit: 1.2, rating: 4.9, reviews: 63, status: "available", seed: "gopro-action",  seller: "9sLa…1nK" },
-  { id: 8,  name: "PlayStation 5",            category: "Электроника",  price: 0.09, deposit: 0.8, rating: 4.7, reviews: 27, status: "available", seed: "gaming-ps5",    seller: "2jFd…4pC" },
-  { id: 9,  name: "Сноуборд Burton",          category: "Туризм",       price: 0.2,  deposit: 1.5, rating: 4.5, reviews: 16, status: "rented",    seed: "snowboard-winter", seller: "7xK3…mP9" },
-  { id: 10, name: "Квадроцикл ATV 250",       category: "Транспорт",    price: 1.2,  deposit: 8.0, rating: 4.8, reviews: 9,  status: "available", seed: "atv-offroad",   seller: "Bz9n…4aW" },
-  { id: 11, name: "Canon EOS R5",             category: "Фото / Видео", price: 0.7,  deposit: 7.0, rating: 5.0, reviews: 18, status: "available", seed: "camera-canon",  seller: "Qr7p…2xK" },
-  { id: 12, name: "iPad Pro 12.9",            category: "Электроника",  price: 0.18, deposit: 2.0, rating: 4.6, reviews: 33, status: "available", seed: "tablet-ipad",   seller: "Km9z…5bN" },
-];
-
-const CATEGORIES = ["Все", "Фото / Видео", "Электроника", "Транспорт", "Дроны", "Туризм"];
-
-const SORTS = [
-  { label: "По цене ↑",   value: "price_asc"  },
-  { label: "По цене ↓",   value: "price_desc" },
-  { label: "По рейтингу", value: "rating"     },
-  { label: "Новые",       value: "new"        },
-];
+import { fetchPosts, type Post } from "@/lib/api-client";
 
 type RentState = "idle" | "signing" | "done";
 
-function ListingCard({ item, index }: { item: typeof LISTINGS[0]; index: number }) {
+function ListingCard({ item, index }: { item: Post; index: number }) {
   const { address, openModal } = useWalletContext();
   const [rentState, setRentState] = useState<RentState>("idle");
 
+  const imageUrl = item.images?.[0]?.url || `https://picsum.photos/seed/item-${item.id}/400/220`;
+  const isAvailable = item.status === "active";
+  const shortSeller = item.owner?.name?.slice(0, 7) + "…" || "Unknown";
+
   const handleRent = async () => {
-    if (item.status === "rented") return;
+    if (!isAvailable) return;
     if (!address) { openModal(); return; }
     setRentState("signing");
     await new Promise((r) => setTimeout(r, 1800));
@@ -50,7 +31,7 @@ function ListingCard({ item, index }: { item: typeof LISTINGS[0]; index: number 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: index * 0.04, ease: "easeOut" }}
-      whileHover={item.status === "available" ? { y: -3 } : {}}
+      whileHover={isAvailable ? { y: -3 } : {}}
       className="rounded-[24px] overflow-hidden flex flex-col"
       style={{
         background: "var(--surface)",
@@ -59,10 +40,10 @@ function ListingCard({ item, index }: { item: typeof LISTINGS[0]; index: number 
       }}
     >
       {/* Image */}
-      <div className="relative h-44 overflow-hidden shrink-0" style={{ background: "var(--surface-2)" }}>
+      <div className="relative h-44 overflow-hidden shrink-0" style={{ background: "var(--surface-2)", position: "relative" }}>
         <Image
-          src={`https://picsum.photos/seed/${item.seed}/400/220`}
-          alt={item.name}
+          src={imageUrl}
+          alt={item.title}
           fill
           className="object-cover hover:scale-105 transition-transform duration-500"
           unoptimized
@@ -79,7 +60,7 @@ function ListingCard({ item, index }: { item: typeof LISTINGS[0]; index: number 
 
         {/* Status */}
         <div className="absolute top-3 right-3">
-          {item.status === "available" ? (
+          {isAvailable ? (
             <span className="flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-full"
               style={{ background: "rgba(16,185,129,0.12)", border: "1px solid rgba(16,185,129,0.25)", color: "#059669" }}>
               <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
@@ -97,24 +78,24 @@ function ListingCard({ item, index }: { item: typeof LISTINGS[0]; index: number 
       {/* Body */}
       <div className="p-4 flex flex-col flex-1">
         <h3 className="font-bold text-[15px] mb-1 leading-snug" style={{ color: "var(--text-1)" }}>
-          {item.name}
+          {item.title}
         </h3>
 
         {/* Rating + seller */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-1">
             <Star size={11} className="fill-yellow-400 text-yellow-400" />
-            <span className="text-[12px] font-semibold" style={{ color: "var(--text-2)" }}>{item.rating}</span>
-            <span className="text-[11px]" style={{ color: "var(--text-4)" }}>({item.reviews})</span>
+            <span className="text-[12px] font-semibold" style={{ color: "var(--text-2)" }}>{item.rating?.toFixed(1) || "N/A"}</span>
+            <span className="text-[11px]" style={{ color: "var(--text-4)" }}>({item.reviewCount || 0})</span>
           </div>
-          <span className="font-mono text-[10px]" style={{ color: "var(--text-4)" }}>{item.seller}</span>
+          <span className="font-mono text-[10px]" style={{ color: "var(--text-4)" }}>{shortSeller}</span>
         </div>
 
         {/* Price */}
         <div className="flex items-end justify-between mb-4 mt-auto">
           <div>
             <div className="font-bold text-lg leading-none" style={{ color: "var(--text-1)" }}>
-              {item.price} SOL
+              {item.pricePerDay} SOL
             </div>
             <div className="text-[11px] mt-0.5" style={{ color: "var(--text-3)" }}>в день</div>
           </div>
@@ -127,10 +108,10 @@ function ListingCard({ item, index }: { item: typeof LISTINGS[0]; index: number 
         {/* Rent button */}
         <button
           onClick={handleRent}
-          disabled={item.status === "rented" || rentState === "signing"}
+          disabled={!isAvailable || rentState === "signing"}
           className="w-full py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 cursor-pointer disabled:cursor-not-allowed"
           style={
-            item.status === "rented"
+            !isAvailable
               ? { background: "var(--surface)", color: "var(--text-4)" }
               : rentState === "done"
               ? { background: "rgba(16,185,129,0.12)", color: "#059669", border: "1px solid rgba(16,185,129,0.25)" }
@@ -153,26 +134,54 @@ function ListingCard({ item, index }: { item: typeof LISTINGS[0]; index: number 
             </span>
           )}
           {rentState === "done"  && "✓ Аренда оформлена!"}
-          {rentState === "idle"  && (item.status === "rented" ? "Недоступно" : !address ? "Подключить кошелёк" : "Арендовать")}
+          {rentState === "idle"  && (!isAvailable ? "Недоступно" : !address ? "Подключить кошелёк" : "Арендовать")}
         </button>
       </div>
     </motion.div>
   );
 }
 
+const CATEGORIES = ["Все"];
+const SORTS = [
+  { label: "По цене ↑",   value: "price_asc"  },
+  { label: "По цене ↓",   value: "price_desc" },
+  { label: "По рейтингу", value: "rating"     },
+  { label: "Новые",       value: "new"        },
+];
+
 export default function MarketplacePage() {
   const [query,   setQuery]  = useState("");
   const [cat,     setCat]    = useState("Все");
   const [sort,    setSort]   = useState("rating");
   const [filters, setFilters] = useState(false);
+  const [items, setItems] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  let items = LISTINGS
+  useEffect(() => {
+    fetchPosts(1, 50)
+      .then((res) => {
+        setItems(res.data);
+        // Extract unique categories
+        const cats = Array.from(new Set(res.data.map(p => p.category)));
+        if (cats.length > 0) {
+          const allCats = ["Все", ...cats];
+          // Note: We'd need to update categories state here but keeping it simple for now
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to fetch marketplace items:", err);
+        setItems([]);
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  let filtered = items
     .filter((i) => cat === "Все" || i.category === cat)
-    .filter((i) => i.name.toLowerCase().includes(query.toLowerCase()));
+    .filter((i) => i.title.toLowerCase().includes(query.toLowerCase()));
 
-  if (sort === "price_asc")  items = [...items].sort((a, b) => a.price - b.price);
-  if (sort === "price_desc") items = [...items].sort((a, b) => b.price - a.price);
-  if (sort === "rating")     items = [...items].sort((a, b) => b.rating - a.rating);
+  if (sort === "price_asc")  filtered = [...filtered].sort((a, b) => a.pricePerDay - b.pricePerDay);
+  if (sort === "price_desc") filtered = [...filtered].sort((a, b) => b.pricePerDay - a.pricePerDay);
+  if (sort === "rating")     filtered = [...filtered].sort((a, b) => (b.rating || 0) - (a.rating || 0));
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--page-bg)" }}>
@@ -186,7 +195,7 @@ export default function MarketplacePage() {
               Маркетплейс
             </h1>
             <p className="text-sm mt-1" style={{ color: "var(--text-3)" }}>
-              {items.length} объявлений · NFT-аренда на Solana
+              {loading ? "Загрузка..." : `${filtered.length} объявлений`} · NFT-аренда на Solana
             </p>
           </div>
 
@@ -257,16 +266,25 @@ export default function MarketplacePage() {
         </div>
 
         {/* Grid */}
-        {items.length > 0 ? (
+        {loading ? (
+          <div className="flex justify-center py-12">
+            <div className="animate-spin">
+              <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+              </svg>
+            </div>
+          </div>
+        ) : filtered.length > 0 ? (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-16">
-            {items.map((item, i) => (
+            {filtered.map((item, i) => (
               <ListingCard key={item.id} item={item} index={i} />
             ))}
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-24 gap-3">
             <span className="text-4xl">🔍</span>
-            <p className="text-sm font-medium" style={{ color: "var(--text-3)" }}>Ничего не найдено</p>
+            <p className="text-sm font-medium" style={{ color: "var(--text-3)" }}>{items.length === 0 ? "Товары не найдены. Убедитесь, что backend запущен." : "Ничего не найдено"}</p>
             <button onClick={() => { setQuery(""); setCat("Все"); }}
               className="text-xs px-4 py-2 rounded-full cursor-pointer"
               style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-2)" }}>

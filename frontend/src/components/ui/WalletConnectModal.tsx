@@ -65,11 +65,10 @@ export function WalletConnectModal() {
     if (!found) return;
     try {
       setConnectingName(walletName);
-      // select() updates React state — race condition if we call useWallet().connect() right after.
-      // Call the adapter directly to avoid the stale-state issue.
       select(walletName as Parameters<typeof select>[0]);
-      closeModal();
+      await new Promise(r => setTimeout(r, 100)); // Small delay for state update
       await found.adapter.connect();
+      closeModal();
       router.push("/dashboard");
     } catch (err) {
       console.error("Connect failed:", err);
