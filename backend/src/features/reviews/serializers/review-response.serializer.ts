@@ -1,3 +1,4 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   serializeUserProfile,
   UserProfileResponseDto,
@@ -5,13 +6,21 @@ import {
 import { Review } from '../entities/review.entity';
 
 export class ReviewResponseDto {
+  @ApiProperty()
   id: number;
+  @ApiProperty()
   rentId: number;
+  @ApiProperty()
   postId: number;
+  @ApiProperty()
   rating: number;
+  @ApiPropertyOptional({ nullable: true })
   comment: string | null;
+  @ApiPropertyOptional({ type: UserProfileResponseDto, nullable: true })
   author: UserProfileResponseDto | null;
+  @ApiPropertyOptional({ type: UserProfileResponseDto, nullable: true })
   targetUser: UserProfileResponseDto | null;
+  @ApiProperty()
   createdAt: string;
 }
 

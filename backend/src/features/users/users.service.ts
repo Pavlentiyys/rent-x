@@ -2,6 +2,7 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -12,6 +13,8 @@ import { User } from './entities/user.entity';
 
 @Injectable()
 export class UsersService {
+  private readonly logger = new Logger(UsersService.name);
+
   constructor(
     @InjectRepository(User)
     private readonly usersRepository: Repository<User>,
@@ -31,7 +34,18 @@ export class UsersService {
     }
 
     const user = this.usersRepository.create(createUserDto);
-    return this.usersRepository.save(user);
+    const savedUser = await this.usersRepository.save(user);
+
+    this.logger.log(
+      JSON.stringify({
+        event: 'user.created',
+        userId: savedUser.id,
+        walletAddress: savedUser.walletAddress,
+        username: savedUser.username,
+      }),
+    );
+
+    return savedUser;
   }
 
   findAll() {
@@ -70,7 +84,18 @@ export class UsersService {
     }
 
     this.usersRepository.merge(user, updateUserDto);
-    return this.usersRepository.save(user);
+    const updatedUser = await this.usersRepository.save(user);
+
+    this.logger.log(
+      JSON.stringify({
+        event: 'user.updated',
+        userId: updatedUser.id,
+        actorUserId,
+        username: updatedUser.username,
+      }),
+    );
+
+    return updatedUser;
   }
 
   async remove(id: number, actorUserId: number) {
@@ -80,6 +105,14 @@ export class UsersService {
 
     const user = await this.findOne(id);
     await this.usersRepository.remove(user);
+
+    this.logger.log(
+      JSON.stringify({
+        event: 'user.deleted',
+        userId: user.id,
+        actorUserId,
+      }),
+    );
 
     return {
       id,

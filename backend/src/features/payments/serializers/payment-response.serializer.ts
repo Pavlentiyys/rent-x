@@ -1,3 +1,4 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   serializeRent,
   RentResponseDto,
@@ -5,21 +6,31 @@ import {
 import { Rent } from '../../rents/entities/rent.entity';
 
 export class TransactionAccountKeyResponseDto {
+  @ApiProperty()
   wallet: string;
+  @ApiProperty()
   signer: boolean;
+  @ApiProperty()
   writable: boolean;
 }
 
 export class TransactionVerificationResponseDto {
+  @ApiProperty()
   signature: string;
+  @ApiProperty()
   slot: number;
+  @ApiPropertyOptional({ nullable: true })
   blockTime: number | null;
+  @ApiProperty({ type: [String] })
   signerWallets: string[];
+  @ApiProperty({ type: [TransactionAccountKeyResponseDto] })
   accountKeys: TransactionAccountKeyResponseDto[];
 }
 
 export class VerifiedRentPaymentResponseDto {
+  @ApiProperty({ type: RentResponseDto })
   rent: RentResponseDto;
+  @ApiProperty({ type: TransactionVerificationResponseDto })
   verification: TransactionVerificationResponseDto;
 }
 

@@ -1,10 +1,19 @@
+import { ApiProperty } from '@nestjs/swagger';
+
 export class FileUploadResponseDto {
+  @ApiProperty()
   bucket: string;
+  @ApiProperty()
   objectKey: string;
+  @ApiProperty()
   uploadUrl: string;
+  @ApiProperty()
   fileUrl: string;
+  @ApiProperty()
   expiresInSeconds: number;
+  @ApiProperty()
   contentType: string;
+  @ApiProperty()
   size: number;
 }
 

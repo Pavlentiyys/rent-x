@@ -10,12 +10,14 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DisputeRentDto = void 0;
+const swagger_1 = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
 class DisputeRentDto {
     reason;
 }
 exports.DisputeRentDto = DisputeRentDto;
 __decorate([
+    (0, swagger_1.ApiProperty)({ example: 'Item returned with visible damage' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.Length)(1, 1000),
     __metadata("design:type", String)

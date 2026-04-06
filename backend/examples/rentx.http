@@ -1,0 +1,141 @@
+@baseUrl = http://localhost:3000
+@wallet = <SOLANA_WALLET_ADDRESS>
+@signedMessage = <SIGNED_MESSAGE>
+@signature = <BASE58_SIGNATURE>
+@jwt = <JWT>
+@postId = 1
+@rentId = 1
+@userId = 1
+
+### Health
+GET {{baseUrl}}/health
+
+### Swagger
+GET {{baseUrl}}/docs
+
+### Generate SIWS message
+POST {{baseUrl}}/auth/wallet/message
+Content-Type: application/json
+
+{
+  "wallet": "{{wallet}}"
+}
+
+### Verify SIWS signature
+POST {{baseUrl}}/auth/wallet/verify
+Content-Type: application/json
+
+{
+  "wallet": "{{wallet}}",
+  "message": "{{signedMessage}}",
+  "signature": "{{signature}}"
+}
+
+### Current user
+GET {{baseUrl}}/users/me
+Authorization: Bearer {{jwt}}
+
+### Public users
+GET {{baseUrl}}/users
+
+### Create upload URL
+POST {{baseUrl}}/files/upload-url
+Authorization: Bearer {{jwt}}
+Content-Type: application/json
+
+{
+  "fileName": "camera.jpg",
+  "contentType": "image/jpeg",
+  "size": 524288
+}
+
+### Create post
+POST {{baseUrl}}/posts
+Authorization: Bearer {{jwt}}
+Content-Type: application/json
+
+{
+  "title": "Sony A7 IV",
+  "description": "Full-frame mirrorless camera",
+  "category": "electronics",
+  "pricePerDay": "15.000000",
+  "depositAmount": "50.000000",
+  "currencyMint": "So11111111111111111111111111111111111111112",
+  "images": [
+    {
+      "objectKey": "posts/{{userId}}/sony-a7.jpg",
+      "url": "https://files.example.com/posts/{{userId}}/sony-a7.jpg"
+    }
+  ]
+}
+
+### Publish post
+POST {{baseUrl}}/posts/{{postId}}/publish
+Authorization: Bearer {{jwt}}
+
+### Search posts
+GET {{baseUrl}}/posts?search=camera&page=1&limit=10
+
+### My posts
+GET {{baseUrl}}/posts/mine
+Authorization: Bearer {{jwt}}
+
+### Create rent
+POST {{baseUrl}}/rents
+Authorization: Bearer {{jwt}}
+Content-Type: application/json
+
+{
+  "postId": {{postId}},
+  "startDate": "2026-04-15",
+  "endDate": "2026-04-17"
+}
+
+### Approve rent
+POST {{baseUrl}}/rents/{{rentId}}/approve
+Authorization: Bearer {{jwt}}
+
+### Verify rent payment transaction
+POST {{baseUrl}}/payments/rents/{{rentId}}/rent
+Authorization: Bearer {{jwt}}
+Content-Type: application/json
+
+{
+  "signature": "<RENT_PAYMENT_TX_SIGNATURE>"
+}
+
+### Verify deposit transaction
+POST {{baseUrl}}/payments/rents/{{rentId}}/deposit
+Authorization: Bearer {{jwt}}
+Content-Type: application/json
+
+{
+  "signature": "<DEPOSIT_TX_SIGNATURE>"
+}
+
+### Mark paid
+POST {{baseUrl}}/rents/{{rentId}}/mark-paid
+Authorization: Bearer {{jwt}}
+
+### Handover
+POST {{baseUrl}}/rents/{{rentId}}/handover
+Authorization: Bearer {{jwt}}
+
+### Complete rent
+POST {{baseUrl}}/rents/{{rentId}}/complete
+Authorization: Bearer {{jwt}}
+
+### Create review
+POST {{baseUrl}}/reviews
+Authorization: Bearer {{jwt}}
+Content-Type: application/json
+
+{
+  "rentId": {{rentId}},
+  "targetUserId": {{userId}},
+  "rating": 5,
+  "comment": "Smooth and reliable rental experience"
+}
+
+### List reviews
+GET {{baseUrl}}/reviews

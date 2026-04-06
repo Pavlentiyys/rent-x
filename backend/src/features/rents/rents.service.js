@@ -11,6 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
+var RentsService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RentsService = void 0;
 const common_1 = require("@nestjs/common");
@@ -27,11 +28,12 @@ const ACTIVE_RENT_STATUSES = [
     rent_entity_1.RentStatus.Active,
     rent_entity_1.RentStatus.Disputed,
 ];
-let RentsService = class RentsService {
+let RentsService = RentsService_1 = class RentsService {
     rentsRepository;
     rentEventsRepository;
     postsRepository;
     usersRepository;
+    logger = new common_1.Logger(RentsService_1.name);
     constructor(rentsRepository, rentEventsRepository, postsRepository, usersRepository) {
         this.rentsRepository = rentsRepository;
         this.rentEventsRepository = rentEventsRepository;
@@ -98,6 +100,17 @@ let RentsService = class RentsService {
                 startDate: rent.startDate,
                 endDate: rent.endDate,
             },
+        }));
+        this.logger.log(JSON.stringify({
+            event: 'rent.created',
+            rentId: rent.id,
+            postId: rent.postId,
+            ownerId: rent.ownerId,
+            renterId: rent.renterId,
+            startDate: rent.startDate,
+            endDate: rent.endDate,
+            totalAmount: rent.totalAmount,
+            currencyMint: rent.currencyMint,
         }));
         return this.findOne(rent.id, renterId);
     }
@@ -199,6 +212,12 @@ let RentsService = class RentsService {
             throw new common_1.ConflictException('Only non-active rents can be removed');
         }
         await this.rentsRepository.remove(rent);
+        this.logger.log(JSON.stringify({
+            event: 'rent.deleted',
+            rentId: rent.id,
+            actorUserId,
+            status: rent.status,
+        }));
         return {
             id,
             deleted: true,
@@ -223,6 +242,17 @@ let RentsService = class RentsService {
                 depositTxSignature: updates?.depositTxSignature,
                 returnTxSignature: updates?.returnTxSignature,
             },
+        }));
+        this.logger.log(JSON.stringify({
+            event: eventType,
+            rentId: rent.id,
+            actorUserId,
+            previousStatus,
+            nextStatus,
+            cancelReason: updates?.cancelReason ?? null,
+            paymentTxSignature: updates?.paymentTxSignature ?? null,
+            depositTxSignature: updates?.depositTxSignature ?? null,
+            returnTxSignature: updates?.returnTxSignature ?? null,
         }));
         return this.findOne(rent.id, actorUserId);
     }
@@ -264,7 +294,7 @@ let RentsService = class RentsService {
     }
 };
 exports.RentsService = RentsService;
-exports.RentsService = RentsService = __decorate([
+exports.RentsService = RentsService = RentsService_1 = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, typeorm_1.InjectRepository)(rent_entity_1.Rent)),
     __param(1, (0, typeorm_1.InjectRepository)(rent_event_entity_1.RentEvent)),

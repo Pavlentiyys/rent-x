@@ -4,6 +4,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
 export declare class UsersService {
     private readonly usersRepository;
+    private readonly logger;
     constructor(usersRepository: Repository<User>);
     create(createUserDto: CreateUserDto, actorWallet: string): Promise<User>;
     findAll(): Promise<User[]>;

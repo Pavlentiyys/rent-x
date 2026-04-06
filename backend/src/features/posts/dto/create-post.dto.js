@@ -10,6 +10,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreatePostDto = exports.CreatePostImageDto = exports.CreatePostAttributeDto = void 0;
+const swagger_1 = require("@nestjs/swagger");
 const class_transformer_1 = require("class-transformer");
 const class_validator_1 = require("class-validator");
 const post_attribute_entity_1 = require("../entities/post-attribute.entity");
@@ -21,16 +22,19 @@ class CreatePostAttributeDto {
 }
 exports.CreatePostAttributeDto = CreatePostAttributeDto;
 __decorate([
+    (0, swagger_1.ApiProperty)({ example: 'brand' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.Length)(1, 100),
     __metadata("design:type", String)
 ], CreatePostAttributeDto.prototype, "key", void 0);
 __decorate([
+    (0, swagger_1.ApiProperty)({ example: 'Sony' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.MaxLength)(5000),
     __metadata("design:type", String)
 ], CreatePostAttributeDto.prototype, "value", void 0);
 __decorate([
+    (0, swagger_1.ApiProperty)({ enum: post_attribute_entity_1.PostAttributeType }),
     (0, class_validator_1.IsEnum)(post_attribute_entity_1.PostAttributeType),
     __metadata("design:type", String)
 ], CreatePostAttributeDto.prototype, "type", void 0);
@@ -41,15 +45,18 @@ class CreatePostImageDto {
 }
 exports.CreatePostImageDto = CreatePostImageDto;
 __decorate([
+    (0, swagger_1.ApiProperty)({ example: 'posts/1/camera.jpg' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.Length)(1, 255),
     __metadata("design:type", String)
 ], CreatePostImageDto.prototype, "objectKey", void 0);
 __decorate([
+    (0, swagger_1.ApiProperty)({ example: 'https://files.example.com/posts/1/camera.jpg' }),
     (0, class_validator_1.IsUrl)(),
     __metadata("design:type", String)
 ], CreatePostImageDto.prototype, "url", void 0);
 __decorate([
+    (0, swagger_1.ApiPropertyOptional)({ example: 0 }),
     (0, class_validator_1.IsOptional)(),
     (0, class_transformer_1.Type)(() => Number),
     (0, class_validator_1.IsInt)(),
@@ -72,57 +79,68 @@ class CreatePostDto {
 }
 exports.CreatePostDto = CreatePostDto;
 __decorate([
+    (0, swagger_1.ApiProperty)({ example: 'Sony A7 IV' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.Length)(3, 160),
     __metadata("design:type", String)
 ], CreatePostDto.prototype, "title", void 0);
 __decorate([
+    (0, swagger_1.ApiProperty)({ example: 'Full-frame mirrorless camera for rent' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.MaxLength)(10000),
     __metadata("design:type", String)
 ], CreatePostDto.prototype, "description", void 0);
 __decorate([
+    (0, swagger_1.ApiProperty)({ example: 'electronics' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.Length)(1, 80),
     __metadata("design:type", String)
 ], CreatePostDto.prototype, "category", void 0);
 __decorate([
+    (0, swagger_1.ApiProperty)({ example: '15.000000' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.Matches)(/^\d+(\.\d{1,6})?$/),
     __metadata("design:type", String)
 ], CreatePostDto.prototype, "pricePerDay", void 0);
 __decorate([
+    (0, swagger_1.ApiProperty)({ example: '50.000000' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.Matches)(/^\d+(\.\d{1,6})?$/),
     __metadata("design:type", String)
 ], CreatePostDto.prototype, "depositAmount", void 0);
 __decorate([
+    (0, swagger_1.ApiProperty)({ example: 'So11111111111111111111111111111111111111112' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.Matches)(/^[1-9A-HJ-NP-Za-km-z]{32,44}$/),
     __metadata("design:type", String)
 ], CreatePostDto.prototype, "currencyMint", void 0);
 __decorate([
+    (0, swagger_1.ApiPropertyOptional)({ example: 'Berlin' }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.MaxLength)(255),
     __metadata("design:type", String)
 ], CreatePostDto.prototype, "location", void 0);
 __decorate([
+    (0, swagger_1.ApiPropertyOptional)({ enum: post_entity_1.PostStatus }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsEnum)(post_entity_1.PostStatus),
     __metadata("design:type", String)
 ], CreatePostDto.prototype, "status", void 0);
 __decorate([
+    (0, swagger_1.ApiPropertyOptional)({ example: '2026-04-10T00:00:00.000Z' }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsDateString)(),
     __metadata("design:type", String)
 ], CreatePostDto.prototype, "availableFrom", void 0);
 __decorate([
+    (0, swagger_1.ApiPropertyOptional)({ example: '2026-04-20T00:00:00.000Z' }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsDateString)(),
     __metadata("design:type", String)
 ], CreatePostDto.prototype, "availableTo", void 0);
 __decorate([
+    (0, swagger_1.ApiPropertyOptional)({ type: [CreatePostAttributeDto] }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsArray)(),
     (0, class_validator_1.ArrayMaxSize)(50),
@@ -131,6 +149,7 @@ __decorate([
     __metadata("design:type", Array)
 ], CreatePostDto.prototype, "attributes", void 0);
 __decorate([
+    (0, swagger_1.ApiPropertyOptional)({ type: [CreatePostImageDto] }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsArray)(),
     (0, class_validator_1.ArrayMaxSize)(20),

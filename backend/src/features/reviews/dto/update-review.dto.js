@@ -10,6 +10,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UpdateReviewDto = void 0;
+const swagger_1 = require("@nestjs/swagger");
 const class_transformer_1 = require("class-transformer");
 const class_validator_1 = require("class-validator");
 class UpdateReviewDto {
@@ -18,6 +19,7 @@ class UpdateReviewDto {
 }
 exports.UpdateReviewDto = UpdateReviewDto;
 __decorate([
+    (0, swagger_1.ApiPropertyOptional)({ example: 4 }),
     (0, class_validator_1.IsOptional)(),
     (0, class_transformer_1.Type)(() => Number),
     (0, class_validator_1.Min)(1),
@@ -25,6 +27,7 @@ __decorate([
     __metadata("design:type", Number)
 ], UpdateReviewDto.prototype, "rating", void 0);
 __decorate([
+    (0, swagger_1.ApiPropertyOptional)({ example: 'Updated feedback after the return' }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.MaxLength)(2000),

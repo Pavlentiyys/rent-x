@@ -10,12 +10,14 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.VerifyTransactionDto = void 0;
+const swagger_1 = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
 class VerifyTransactionDto {
     signature;
 }
 exports.VerifyTransactionDto = VerifyTransactionDto;
 __decorate([
+    (0, swagger_1.ApiProperty)({ example: '5GJ8hNwqD4Yk...signature' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.Length)(32, 128),
     __metadata("design:type", String)

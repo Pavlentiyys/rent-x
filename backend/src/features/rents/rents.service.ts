@@ -3,6 +3,7 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -23,6 +24,8 @@ const ACTIVE_RENT_STATUSES: RentStatus[] = [
 
 @Injectable()
 export class RentsService {
+  private readonly logger = new Logger(RentsService.name);
+
   constructor(
     @InjectRepository(Rent)
     private readonly rentsRepository: Repository<Rent>,
@@ -108,6 +111,20 @@ export class RentsService {
           startDate: rent.startDate,
           endDate: rent.endDate,
         },
+      }),
+    );
+
+    this.logger.log(
+      JSON.stringify({
+        event: 'rent.created',
+        rentId: rent.id,
+        postId: rent.postId,
+        ownerId: rent.ownerId,
+        renterId: rent.renterId,
+        startDate: rent.startDate,
+        endDate: rent.endDate,
+        totalAmount: rent.totalAmount,
+        currencyMint: rent.currencyMint,
       }),
     );
 
@@ -284,6 +301,15 @@ export class RentsService {
 
     await this.rentsRepository.remove(rent);
 
+    this.logger.log(
+      JSON.stringify({
+        event: 'rent.deleted',
+        rentId: rent.id,
+        actorUserId,
+        status: rent.status,
+      }),
+    );
+
     return {
       id,
       deleted: true,
@@ -318,6 +344,20 @@ export class RentsService {
           depositTxSignature: updates?.depositTxSignature,
           returnTxSignature: updates?.returnTxSignature,
         },
+      }),
+    );
+
+    this.logger.log(
+      JSON.stringify({
+        event: eventType,
+        rentId: rent.id,
+        actorUserId,
+        previousStatus,
+        nextStatus,
+        cancelReason: updates?.cancelReason ?? null,
+        paymentTxSignature: updates?.paymentTxSignature ?? null,
+        depositTxSignature: updates?.depositTxSignature ?? null,
+        returnTxSignature: updates?.returnTxSignature ?? null,
       }),
     );
 

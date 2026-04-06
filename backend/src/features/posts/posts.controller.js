@@ -14,6 +14,8 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PostsController = void 0;
 const common_1 = require("@nestjs/common");
+const swagger_1 = require("@nestjs/swagger");
+const api_common_error_responses_decorator_1 = require("../../common/swagger/api-common-error-responses.decorator");
 const current_user_decorator_1 = require("../auth/decorators/current-user.decorator");
 const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
 const post_action_dto_1 = require("./dto/post-action.dto");
@@ -61,6 +63,10 @@ let PostsController = class PostsController {
 };
 exports.PostsController = PostsController;
 __decorate([
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Create a rental post' }),
+    (0, swagger_1.ApiOkResponse)({ type: post_response_serializer_1.PostResponseDto }),
+    (0, api_common_error_responses_decorator_1.ApiCommonErrorResponses)(400, 401, 403, 404, 409),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Post)(),
     __param(0, (0, common_1.Body)()),
@@ -70,6 +76,8 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], PostsController.prototype, "create", null);
 __decorate([
+    (0, swagger_1.ApiOperation)({ summary: 'Search active rental posts' }),
+    (0, swagger_1.ApiOkResponse)({ type: post_response_serializer_1.PaginatedPostsResponseDto }),
     (0, common_1.Get)(),
     __param(0, (0, common_1.Query)()),
     __metadata("design:type", Function),
@@ -77,6 +85,9 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], PostsController.prototype, "findAll", null);
 __decorate([
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'List current user posts' }),
+    (0, swagger_1.ApiOkResponse)({ type: post_response_serializer_1.PaginatedPostsResponseDto }),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Get)('mine'),
     __param(0, (0, current_user_decorator_1.CurrentUser)()),
@@ -86,6 +97,9 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], PostsController.prototype, "findMine", null);
 __decorate([
+    (0, swagger_1.ApiOperation)({ summary: 'Get post by id' }),
+    (0, swagger_1.ApiOkResponse)({ type: post_response_serializer_1.PostResponseDto }),
+    (0, api_common_error_responses_decorator_1.ApiCommonErrorResponses)(404),
     (0, common_1.Get)(':id'),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
     __metadata("design:type", Function),
@@ -93,6 +107,10 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], PostsController.prototype, "findOne", null);
 __decorate([
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Update own post' }),
+    (0, swagger_1.ApiOkResponse)({ type: post_response_serializer_1.PostResponseDto }),
+    (0, api_common_error_responses_decorator_1.ApiCommonErrorResponses)(400, 401, 403, 404, 409),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Patch)(':id'),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
@@ -103,6 +121,10 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], PostsController.prototype, "update", null);
 __decorate([
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Publish a draft or paused post' }),
+    (0, swagger_1.ApiOkResponse)({ type: post_response_serializer_1.PostResponseDto }),
+    (0, api_common_error_responses_decorator_1.ApiCommonErrorResponses)(401, 403, 404, 409),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Post)(':id/publish'),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
@@ -112,6 +134,10 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], PostsController.prototype, "publish", null);
 __decorate([
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Pause a post' }),
+    (0, swagger_1.ApiOkResponse)({ type: post_response_serializer_1.PostResponseDto }),
+    (0, api_common_error_responses_decorator_1.ApiCommonErrorResponses)(400, 401, 403, 404, 409),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Post)(':id/pause'),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
@@ -122,6 +148,10 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], PostsController.prototype, "pause", null);
 __decorate([
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Archive a post' }),
+    (0, swagger_1.ApiOkResponse)({ type: post_response_serializer_1.PostResponseDto }),
+    (0, api_common_error_responses_decorator_1.ApiCommonErrorResponses)(400, 401, 403, 404, 409),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Post)(':id/archive'),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
@@ -132,6 +162,12 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], PostsController.prototype, "archive", null);
 __decorate([
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Delete a post' }),
+    (0, swagger_1.ApiOkResponse)({
+        schema: { properties: { id: { type: 'number' }, deleted: { type: 'boolean' } } },
+    }),
+    (0, api_common_error_responses_decorator_1.ApiCommonErrorResponses)(401, 403, 404, 409),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Delete)(':id'),
     __param(0, (0, common_1.Param)('id', common_1.ParseIntPipe)),
@@ -141,6 +177,7 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], PostsController.prototype, "remove", null);
 exports.PostsController = PostsController = __decorate([
+    (0, swagger_1.ApiTags)('posts'),
     (0, common_1.Controller)('posts'),
     __metadata("design:paramtypes", [posts_service_1.PostsService])
 ], PostsController);

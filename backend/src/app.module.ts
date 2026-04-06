@@ -1,7 +1,9 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { RequestContextMiddleware } from './common/middleware/request-context.middleware';
 import { validateEnvironment } from './config/environment.validation';
+import { AuthRateLimitMiddleware } from './features/auth/middleware/auth-rate-limit.middleware';
 import { AuthModule } from './features/auth/auth.module';
 import { FilesModule } from './features/files/files.module';
 import { PaymentsModule } from './features/payments/payments.module';
@@ -44,4 +46,18 @@ import { HealthModule } from './health/health.module';
   controllers: [],
   providers: [],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(RequestContextMiddleware)
+      .forRoutes({
+        path: '*',
+        method: RequestMethod.ALL,
+      });
+
+    consumer.apply(AuthRateLimitMiddleware).forRoutes(
+      { path: 'auth/wallet/message', method: RequestMethod.POST },
+      { path: 'auth/wallet/verify', method: RequestMethod.POST },
+    );
+  }
+}

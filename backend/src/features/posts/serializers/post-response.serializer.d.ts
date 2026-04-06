@@ -30,6 +30,13 @@ export declare class PostResponseDto {
     createdAt: string;
     updatedAt: string;
 }
+export declare class PaginatedPostsResponseDto {
+    items: PostResponseDto[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+}
 export declare function serializePost(post: Post): PostResponseDto;
 export declare function serializePaginatedPosts(result: {
     items: Post[];

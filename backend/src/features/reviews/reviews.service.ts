@@ -2,6 +2,7 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -14,6 +15,8 @@ import { Review } from './entities/review.entity';
 
 @Injectable()
 export class ReviewsService {
+  private readonly logger = new Logger(ReviewsService.name);
+
   constructor(
     @InjectRepository(Review)
     private readonly reviewsRepository: Repository<Review>,
@@ -67,6 +70,18 @@ export class ReviewsService {
 
     await this.recalculateUserRating(dto.targetUserId);
 
+    this.logger.log(
+      JSON.stringify({
+        event: 'review.created',
+        reviewId: review.id,
+        rentId: review.rentId,
+        postId: review.postId,
+        authorId,
+        targetUserId: review.targetUserId,
+        rating: review.rating,
+      }),
+    );
+
     return this.findOne(review.id);
   }
 
@@ -116,6 +131,17 @@ export class ReviewsService {
     await this.reviewsRepository.save(review);
 
     await this.recalculateUserRating(review.targetUserId);
+
+    this.logger.log(
+      JSON.stringify({
+        event: 'review.updated',
+        reviewId: review.id,
+        actorUserId,
+        targetUserId: review.targetUserId,
+        rating: review.rating,
+      }),
+    );
+
     return this.findOne(id);
   }
 
@@ -129,6 +155,15 @@ export class ReviewsService {
     const targetUserId = review.targetUserId;
     await this.reviewsRepository.remove(review);
     await this.recalculateUserRating(targetUserId);
+
+    this.logger.log(
+      JSON.stringify({
+        event: 'review.deleted',
+        reviewId: review.id,
+        actorUserId,
+        targetUserId,
+      }),
+    );
 
     return {
       id,

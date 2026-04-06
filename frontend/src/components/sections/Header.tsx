@@ -2,13 +2,17 @@
 import Link from "next/link";
 import { Sun, Moon, LogOut } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
+import { useLanguage, type Lang } from "@/components/LanguageProvider";
 import { useWalletContext } from "@/components/ui/WalletContext";
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from "framer-motion";
 import { useState } from "react";
 
+const LANGS: Lang[] = ["en", "kz", "ru"];
+
 export const Header = () => {
   const { theme, toggleTheme } = useTheme();
   const { address, connecting, openModal, disconnect } = useWalletContext();
+  const { lang, setLang, t } = useLanguage();
   const [scrolled, setScrolled] = useState(false);
 
   const { scrollY } = useScroll();
@@ -53,9 +57,9 @@ export const Header = () => {
                 style={{ overflow: "hidden", whiteSpace: "nowrap" }}
               >
                 {[
-                  { href: "/#catalog",      label: "Каталог" },
-                  { href: "/marketplace",   label: "Маркетплейс" },
-                  { href: "/#how-it-works", label: "Для хостов" },
+                  { href: "/#catalog",      label: t.nav.catalog },
+                  { href: "/marketplace",   label: t.nav.marketplace },
+                  { href: "/#how-it-works", label: t.nav.forHosts },
                 ].map(({ href, label }) => (
                   <Link
                     key={href}
@@ -70,7 +74,7 @@ export const Header = () => {
             )}
           </AnimatePresence>
 
-          {/* connect Wallet / connected, please check it */}
+          {/* connect Wallet / connected */}
           {address ? (
             <motion.button
               whileHover={{ scale: 1.04, opacity: 0.9 }}
@@ -99,7 +103,7 @@ export const Header = () => {
                 boxShadow: "0 2px 10px rgba(27,43,184,0.35)",
               }}
             >
-              {/* solana logo official 3-bar mark here */}
+              {/* solana logo official 3-bar mark */}
               <svg width="16" height="13" viewBox="0 0 96 78" fill="none" className="shrink-0">
                 <defs>
                   <linearGradient id="sg" x1="0" y1="39" x2="96" y2="39" gradientUnits="userSpaceOnUse">
@@ -108,16 +112,44 @@ export const Header = () => {
                     <stop offset="1" stopColor="#14F195"/>
                   </linearGradient>
                 </defs>
-                {/* top bar */}
                 <path d="M16 0h72a6 6 0 0 1 4.2 10.2L78.4 24H6.4A6 6 0 0 1 2.2 13.8L16 0Z" fill="url(#sg)"/>
-                {/* middle bar */}
                 <path d="M80 27H8a6 6 0 0 0-4.2 10.2L17.6 51h72a6 6 0 0 0 4.2-10.2L80 27Z" fill="url(#sg)"/>
-                {/* bottom bar */}
                 <path d="M16 54h72a6 6 0 0 1 4.2 10.2L78.4 78H6.4A6 6 0 0 1 2.2 67.8L16 54Z" fill="url(#sg)"/>
               </svg>
-              {connecting ? "Подключение…" : "Connect Wallet"}
+              {connecting ? t.wallet.connecting : t.wallet.connect}
             </motion.button>
           )}
+        </div>
+
+        {/* language switcher */}
+        <div
+          className="flex items-center h-12 rounded-full px-1 gap-0.5 shrink-0"
+          style={{
+            background: "var(--header-pill-bg)",
+            boxShadow: "var(--header-pill-shadow)",
+            border: "1px solid var(--header-pill-border)",
+            backdropFilter: "var(--card-blur) var(--card-saturate)",
+            WebkitBackdropFilter: "var(--card-blur) var(--card-saturate)",
+          }}
+        >
+          {LANGS.map((l) => (
+            <button
+              key={l}
+              onClick={() => setLang(l)}
+              className="w-9 h-9 rounded-full text-[11px] font-bold uppercase tracking-wide transition-all duration-200 cursor-pointer"
+              style={
+                lang === l
+                  ? {
+                      background: "linear-gradient(135deg, #2B44D0 0%, #1B2BB8 100%)",
+                      color: "#fff",
+                      boxShadow: "0 2px 8px rgba(27,43,184,0.35)",
+                    }
+                  : { color: "var(--text-3)" }
+              }
+            >
+              {l}
+            </button>
+          ))}
         </div>
 
         {/* theme toggle */}

@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -21,9 +22,26 @@ type RentPaymentField =
   | 'depositTxSignature'
   | 'returnTxSignature';
 
+type TransferRequirement = {
+  actorWallet: string;
+  expectedMint: string;
+  minAmount: number;
+  maxAmount?: number;
+};
+
+type ParsedTransfer = {
+  program: string;
+  mint: string | null;
+  amount: number;
+  authority: string | null;
+  source: string | null;
+  destination: string | null;
+};
+
 @Injectable()
 export class PaymentsService {
   private readonly connection: Connection;
+  private readonly logger = new Logger(PaymentsService.name);
 
   constructor(
     configService: ConfigService,
@@ -62,7 +80,11 @@ export class PaymentsService {
       'paymentTxSignature',
       signature,
       actorUserId,
-      actorWallet,
+      {
+        actorWallet,
+        expectedMint: rent.currencyMint,
+        minAmount: Number(rent.rentAmount),
+      },
       'payment.rent_verified',
     );
   }
@@ -87,12 +109,20 @@ export class PaymentsService {
       );
     }
 
+    if (Number(rent.depositAmount) <= 0) {
+      throw new ConflictException('This rent does not require a deposit payment');
+    }
+
     return this.attachVerifiedTransaction(
       rent,
       'depositTxSignature',
       signature,
       actorUserId,
-      actorWallet,
+      {
+        actorWallet,
+        expectedMint: rent.currencyMint,
+        minAmount: Number(rent.depositAmount),
+      },
       'payment.deposit_verified',
     );
   }
@@ -115,12 +145,21 @@ export class PaymentsService {
       );
     }
 
+    if (Number(rent.depositAmount) <= 0) {
+      throw new ConflictException('This rent does not require a return payment');
+    }
+
     return this.attachVerifiedTransaction(
       rent,
       'returnTxSignature',
       signature,
       actorUserId,
-      actorWallet,
+      {
+        actorWallet,
+        expectedMint: rent.currencyMint,
+        minAmount: 0.000001,
+        maxAmount: Number(rent.depositAmount),
+      },
       'payment.return_verified',
     );
   }
@@ -133,6 +172,17 @@ export class PaymentsService {
       throw new BadRequestException('Authenticated wallet is not a signer of this transaction');
     }
 
+    this.logger.log(
+      JSON.stringify({
+        event: 'payment.transaction_inspected',
+        signature,
+        actorWallet,
+        slot: transaction.slot,
+        blockTime: transaction.blockTime,
+        signerWallets,
+      }),
+    );
+
     return this.toVerificationResponse(signature, transaction);
   }
 
@@ -141,7 +191,7 @@ export class PaymentsService {
     field: RentPaymentField,
     signature: string,
     actorUserId: number,
-    actorWallet: string,
+    requirement: TransferRequirement,
     eventType: string,
   ) {
     if (rent[field]) {
@@ -153,8 +203,16 @@ export class PaymentsService {
     const transaction = await this.fetchSuccessfulTransaction(signature);
     const signerWallets = this.extractSignerWallets(transaction);
 
-    if (!signerWallets.includes(actorWallet)) {
+    if (!signerWallets.includes(requirement.actorWallet)) {
       throw new BadRequestException('Authenticated wallet is not a signer of this transaction');
+    }
+
+    const matchedTransfer = this.findMatchingTransfer(transaction, requirement);
+
+    if (!matchedTransfer) {
+      throw new BadRequestException(
+        'Transaction does not contain the expected token transfer for this rent',
+      );
     }
 
     rent[field] = signature;
@@ -170,7 +228,22 @@ export class PaymentsService {
           blockTime: transaction.blockTime,
           signerWallets,
           field,
+          matchedTransfer,
         },
+      }),
+    );
+
+    this.logger.log(
+      JSON.stringify({
+        event: eventType,
+        rentId: rent.id,
+        actorUserId,
+        field,
+        signature,
+        slot: transaction.slot,
+        blockTime: transaction.blockTime,
+        signerWallets,
+        matchedTransfer,
       }),
     );
 
@@ -232,5 +305,108 @@ export class PaymentsService {
         writable: account.writable,
       })),
     };
+  }
+
+  private findMatchingTransfer(
+    transaction: ParsedTransactionWithMeta,
+    requirement: TransferRequirement,
+  ) {
+    const transfers = this.extractTransfers(transaction);
+
+    return transfers.find((transfer) => {
+      if (transfer.mint !== requirement.expectedMint) {
+        return false;
+      }
+
+      if (transfer.amount < requirement.minAmount) {
+        return false;
+      }
+
+      if (
+        requirement.maxAmount !== undefined &&
+        transfer.amount > requirement.maxAmount
+      ) {
+        return false;
+      }
+
+      if (transfer.authority && transfer.authority !== requirement.actorWallet) {
+        return false;
+      }
+
+      return true;
+    });
+  }
+
+  private extractTransfers(transaction: ParsedTransactionWithMeta): ParsedTransfer[] {
+    return transaction.transaction.message.instructions.flatMap((instruction) => {
+      if (!('parsed' in instruction) || !instruction.parsed) {
+        return [];
+      }
+
+      if (!['spl-token', 'spl-token-2022'].includes(instruction.program)) {
+        return [];
+      }
+
+      const parsed = instruction.parsed as {
+        type?: string;
+        info?: Record<string, unknown>;
+      };
+
+      if (!['transfer', 'transferChecked'].includes(parsed.type ?? '')) {
+        return [];
+      }
+
+      const info = parsed.info ?? {};
+      const amount = this.extractTransferAmount(info);
+
+      if (amount === null) {
+        return [];
+      }
+
+      return [
+        {
+          program: instruction.program,
+          mint: typeof info.mint === 'string' ? info.mint : null,
+          amount,
+          authority: this.extractAuthority(info),
+          source: typeof info.source === 'string' ? info.source : null,
+          destination: typeof info.destination === 'string' ? info.destination : null,
+        },
+      ];
+    });
+  }
+
+  private extractTransferAmount(info: Record<string, unknown>) {
+    const tokenAmount = info.tokenAmount as
+      | { uiAmountString?: string; uiAmount?: number }
+      | undefined;
+
+    if (typeof tokenAmount?.uiAmountString === 'string') {
+      return Number(tokenAmount.uiAmountString);
+    }
+
+    if (typeof tokenAmount?.uiAmount === 'number') {
+      return tokenAmount.uiAmount;
+    }
+
+    if (typeof info.amount === 'string' || typeof info.amount === 'number') {
+      return Number(info.amount);
+    }
+
+    return null;
+  }
+
+  private extractAuthority(info: Record<string, unknown>) {
+    const authorityFields = ['authority', 'owner', 'sourceOwner', 'multisigAuthority'];
+
+    for (const field of authorityFields) {
+      const value = info[field];
+
+      if (typeof value === 'string') {
+        return value;
+      }
+    }
+
+    return null;
   }
 }

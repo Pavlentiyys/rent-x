@@ -903,6 +903,11 @@
   resolved "https://registry.npmjs.org/@lukeed/csprng/-/csprng-1.1.0.tgz"
   integrity sha512-Z7C/xXCiGWsg0KuKsHTKJxbWhpI3Vs5GwLfOean7MGyVFGqdRgBbAjOCh6u4bbjPc/8MJ2pZmK/0DLdCbivLDA==
 
+"@microsoft/tsdoc@0.16.0":
+  version "0.16.0"
+  resolved "https://registry.npmjs.org/@microsoft/tsdoc/-/tsdoc-0.16.0.tgz"
+  integrity sha512-xgAyonlVVS+q7Vc7qLW0UrJU7rSFcETRWsqdXZtjzRU8dF+6CkozTK4V4y1LwOX7j8r/vHphjDeMeGI4tNGeGA==
+
 "@nestjs/cli@^11.0.0":
   version "11.0.17"
   resolved "https://registry.npmjs.org/@nestjs/cli/-/cli-11.0.17.tgz"
@@ -972,6 +977,11 @@
   resolved "https://registry.npmjs.org/@nestjs/mapped-types/-/mapped-types-2.1.1.tgz"
   integrity sha512-SCCoMEJ6jdeI5h/N+KCVF1+pmg/hmEkNA5nHTS8Gvww7T/LCl4o1gFLinw2iQ60w7slFkszHcGLKGdazVI4F8A==
 
+"@nestjs/mapped-types@2.1.0":
+  version "2.1.0"
+  resolved "https://registry.npmjs.org/@nestjs/mapped-types/-/mapped-types-2.1.0.tgz"
+  integrity sha512-W+n+rM69XsFdwORF11UqJahn4J3xi4g/ZEOlJNL6KoW5ygWSmBB2p0S2BZ4FQeS/NDH72e6xIcu35SfJnE8bXw==
+
 "@nestjs/passport@^11.0.5":
   version "11.0.5"
   resolved "https://registry.npmjs.org/@nestjs/passport/-/passport-11.0.5.tgz"
@@ -998,6 +1008,18 @@
     comment-json "4.6.2"
     jsonc-parser "3.3.1"
     pluralize "8.0.0"
+
+"@nestjs/swagger@^11.2.6":
+  version "11.2.6"
+  resolved "https://registry.npmjs.org/@nestjs/swagger/-/swagger-11.2.6.tgz"
+  integrity sha512-oiXOxMQqDFyv1AKAqFzSo6JPvMEs4uA36Eyz/s2aloZLxUjcLfUMELSLSNQunr61xCPTpwEOShfmO7NIufKXdA==
+  dependencies:
+    "@microsoft/tsdoc" "0.16.0"
+    "@nestjs/mapped-types" "2.1.0"
+    js-yaml "4.1.1"
+    lodash "4.17.23"
+    path-to-regexp "8.3.0"
+    swagger-ui-dist "5.31.0"
 
 "@nestjs/testing@^11.0.1":
   version "11.1.17"
@@ -1046,6 +1068,11 @@
   version "0.2.9"
   resolved "https://registry.npmjs.org/@pkgr/core/-/core-0.2.9.tgz"
   integrity sha512-QNqXyfVS2wm9hweSYD2O7F0G06uurj9kZ96TRQE5Y9hU7+tgdZwIkbAKc5Ocy1HxEY2kuDQa6cQ1WRs/O5LFKA==
+
+"@scarf/scarf@=1.4.0":
+  version "1.4.0"
+  resolved "https://registry.npmjs.org/@scarf/scarf/-/scarf-1.4.0.tgz"
+  integrity sha512-xxeapPiUXdZAE3che6f3xogoJPeZgig6omHEy1rIY5WVsB3H2BHNnZH+gHG6x91SCWyQCzWGsuL2Hh3ClO5/qQ==
 
 "@sinclair/typebox@^0.34.0":
   version "0.34.49"
@@ -2193,12 +2220,12 @@ cjs-module-lexer@^2.1.0:
   resolved "https://registry.npmjs.org/cjs-module-lexer/-/cjs-module-lexer-2.2.0.tgz"
   integrity sha512-4bHTS2YuzUvtoLjdy+98ykbNB5jS0+07EvFNXerqZQJ89F7DI6ET7OQo/HJuW6K0aVsKA9hj9/RVb2kQVOrPDQ==
 
-"class-transformer@^0.4.0 || ^0.5.0", class-transformer@^0.5.1, class-transformer@>=0.4.1:
+class-transformer@*, "class-transformer@^0.4.0 || ^0.5.0", class-transformer@^0.5.1, class-transformer@>=0.4.1:
   version "0.5.1"
   resolved "https://registry.npmjs.org/class-transformer/-/class-transformer-0.5.1.tgz"
   integrity sha512-SQa1Ws6hUbfC98vKGxZH3KFY0Y1lm5Zm0SY8XX9zbK7FJCyVEac3ATW0RIpwzW+oOfmHE5PMPufDG9hCfoEOMw==
 
-"class-validator@^0.13.0 || ^0.14.0 || ^0.15.0", class-validator@^0.15.1, class-validator@>=0.13.2:
+class-validator@*, "class-validator@^0.13.0 || ^0.14.0", "class-validator@^0.13.0 || ^0.14.0 || ^0.15.0", class-validator@^0.15.1, class-validator@>=0.13.2:
   version "0.15.1"
   resolved "https://registry.npmjs.org/class-validator/-/class-validator-0.15.1.tgz"
   integrity sha512-LqoS80HBBSCVhz/3KloUly0ovokxpdOLR++Al3J3+dHXWt9sTKlKd4eYtoxhxyUjoe5+UcIM+5k9MIxyBWnRTw==
@@ -2489,10 +2516,20 @@ dotenv-expand@12.0.3:
   dependencies:
     dotenv "^16.4.5"
 
-dotenv@^16.4.5, dotenv@^16.6.1:
+dotenv@^16.4.5:
   version "16.6.1"
   resolved "https://registry.npmjs.org/dotenv/-/dotenv-16.6.1.tgz"
   integrity sha512-uBq4egWHTcTt33a72vpSG0z3HnPuIl6NqYcTrKEg2azoEyl2hpW0zqlxysq2pK9HlDIHyHyakeYaYnSAwd8bow==
+
+dotenv@^16.6.1:
+  version "16.6.1"
+  resolved "https://registry.npmjs.org/dotenv/-/dotenv-16.6.1.tgz"
+  integrity sha512-uBq4egWHTcTt33a72vpSG0z3HnPuIl6NqYcTrKEg2azoEyl2hpW0zqlxysq2pK9HlDIHyHyakeYaYnSAwd8bow==
+
+dotenv@^17.4.0:
+  version "17.4.0"
+  resolved "https://registry.npmjs.org/dotenv/-/dotenv-17.4.0.tgz"
+  integrity sha512-kCKF62fwtzwYm0IGBNjRUjtJgMfGapII+FslMHIjMR5KTnwEmBmWLDRSnc3XSNP8bNy34tekgQyDT0hr7pERRQ==
 
 dotenv@17.2.3:
   version "17.2.3"
@@ -2803,7 +2840,7 @@ expect@^30.0.0, expect@30.3.0:
     jest-mock "30.3.0"
     jest-util "30.3.0"
 
-express@5.2.1:
+"express@>=4.0.0 || >=5.0.0-beta", express@5.2.1:
   version "5.2.1"
   resolved "https://registry.npmjs.org/express/-/express-5.2.1.tgz"
   integrity sha512-hIS4idWWai69NezIdRt2xFVofaF4j+6INOpJlVOLDO8zXGpUVEVzIYk12UUi2JzjEzWL3IOAxcTubgz9Po0yXw==
@@ -3853,7 +3890,7 @@ js-yaml@^3.13.1:
     argparse "^1.0.7"
     esprima "^4.0.0"
 
-js-yaml@^4.1.0, js-yaml@^4.1.1:
+js-yaml@^4.1.0, js-yaml@^4.1.1, js-yaml@4.1.1:
   version "4.1.1"
   resolved "https://registry.npmjs.org/js-yaml/-/js-yaml-4.1.1.tgz"
   integrity sha512-qQKT4zQxXl8lLwBtHMWwaTcGfFOZviOJet3Oy/xmGk2gZH677CJM9EvtfdSkgWcATZhj/55JZ0rmy3myCT5lsA==
@@ -5320,6 +5357,20 @@ supports-color@^8.1.1:
   integrity sha512-MpUEN2OodtUzxvKQl72cUF7RQ5EiHsGvSsVG0ia9c5RbWGL2CI4C7EpPS8UTBIplnlzZiNuV56w+FuNxy3ty2Q==
   dependencies:
     has-flag "^4.0.0"
+
+swagger-ui-dist@>=5.0.0, swagger-ui-dist@5.31.0:
+  version "5.31.0"
+  resolved "https://registry.npmjs.org/swagger-ui-dist/-/swagger-ui-dist-5.31.0.tgz"
+  integrity sha512-zSUTIck02fSga6rc0RZP3b7J7wgHXwLea8ZjgLA3Vgnb8QeOl3Wou2/j5QkzSGeoz6HusP/coYuJl33aQxQZpg==
+  dependencies:
+    "@scarf/scarf" "=1.4.0"
+
+swagger-ui-express@^5.0.1:
+  version "5.0.1"
+  resolved "https://registry.npmjs.org/swagger-ui-express/-/swagger-ui-express-5.0.1.tgz"
+  integrity sha512-SrNU3RiBGTLLmFU8GIJdOdanJTl4TOmT27tt3bWWHppqYmAZ6IDuEuBvMU6nZq0zLEe6b/1rACXCgLZqO6ZfrA==
+  dependencies:
+    swagger-ui-dist ">=5.0.0"
 
 symbol-observable@4.0.0:
   version "4.0.0"

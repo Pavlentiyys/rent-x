@@ -10,6 +10,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreateRentDto = void 0;
+const swagger_1 = require("@nestjs/swagger");
 const class_transformer_1 = require("class-transformer");
 const class_validator_1 = require("class-validator");
 class CreateRentDto {
@@ -19,16 +20,19 @@ class CreateRentDto {
 }
 exports.CreateRentDto = CreateRentDto;
 __decorate([
+    (0, swagger_1.ApiProperty)({ example: 42 }),
     (0, class_transformer_1.Type)(() => Number),
     (0, class_validator_1.IsInt)(),
     (0, class_validator_1.Min)(1),
     __metadata("design:type", Number)
 ], CreateRentDto.prototype, "postId", void 0);
 __decorate([
+    (0, swagger_1.ApiProperty)({ example: '2026-04-15' }),
     (0, class_validator_1.IsDateString)(),
     __metadata("design:type", String)
 ], CreateRentDto.prototype, "startDate", void 0);
 __decorate([
+    (0, swagger_1.ApiProperty)({ example: '2026-04-17' }),
     (0, class_validator_1.IsDateString)(),
     __metadata("design:type", String)
 ], CreateRentDto.prototype, "endDate", void 0);

@@ -6,6 +6,7 @@ export declare class FilesService implements OnModuleInit {
     private readonly client;
     private readonly bucketName;
     private readonly publicBaseUrl;
+    private readonly logger;
     constructor(configService: ConfigService);
     onModuleInit(): Promise<void>;
     createUploadUrl(dto: CreateFileUploadDto, ownerId: number): Promise<{

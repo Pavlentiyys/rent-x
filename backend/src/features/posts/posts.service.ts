@@ -2,6 +2,7 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -25,6 +26,8 @@ const NON_TERMINAL_RENT_STATUSES: RentStatus[] = [
 
 @Injectable()
 export class PostsService {
+  private readonly logger = new Logger(PostsService.name);
+
   constructor(
     @InjectRepository(Post)
     private readonly postsRepository: Repository<Post>,
@@ -102,6 +105,18 @@ export class PostsService {
 
       await this.postImagesRepository.save(images);
     }
+
+    this.logger.log(
+      JSON.stringify({
+        event: 'post.created',
+        postId: post.id,
+        ownerId,
+        status: post.status,
+        category: post.category,
+        pricePerDay: post.pricePerDay,
+        depositAmount: post.depositAmount,
+      }),
+    );
 
     return this.findOne(post.id, ownerId);
   }
@@ -206,6 +221,17 @@ export class PostsService {
       await this.replaceImages(id, dto.images);
     }
 
+    this.logger.log(
+      JSON.stringify({
+        event: 'post.updated',
+        postId: post.id,
+        actorUserId,
+        status: post.status,
+        title: post.title,
+        category: post.category,
+      }),
+    );
+
     return this.findOne(id, actorUserId);
   }
 
@@ -226,6 +252,15 @@ export class PostsService {
     post.status = PostStatus.Active;
     await this.postsRepository.save(post);
 
+    this.logger.log(
+      JSON.stringify({
+        event: 'post.published',
+        postId: post.id,
+        actorUserId,
+        status: post.status,
+      }),
+    );
+
     return this.findOne(id, actorUserId);
   }
 
@@ -239,6 +274,15 @@ export class PostsService {
 
     post.status = PostStatus.Paused;
     await this.postsRepository.save(post);
+
+    this.logger.log(
+      JSON.stringify({
+        event: 'post.paused',
+        postId: post.id,
+        actorUserId,
+        reason: _reason ?? null,
+      }),
+    );
 
     return this.findOne(id, actorUserId);
   }
@@ -254,6 +298,15 @@ export class PostsService {
     post.status = PostStatus.Archived;
     await this.postsRepository.save(post);
 
+    this.logger.log(
+      JSON.stringify({
+        event: 'post.archived',
+        postId: post.id,
+        actorUserId,
+        reason: _reason ?? null,
+      }),
+    );
+
     return this.findOne(id, actorUserId);
   }
 
@@ -266,6 +319,15 @@ export class PostsService {
     }
 
     await this.postsRepository.remove(post);
+
+    this.logger.log(
+      JSON.stringify({
+        event: 'post.deleted',
+        postId: post.id,
+        actorUserId,
+        status: post.status,
+      }),
+    );
 
     return {
       id,
