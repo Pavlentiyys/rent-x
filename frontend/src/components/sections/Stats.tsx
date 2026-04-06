@@ -1,13 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { motion, useInView } from "framer-motion";
-
-const stats = [
-  { value: 400,   suffix: "мс",   label: "Финализация" },
-  { value: null,  display: "~$0",  label: "Комиссия" },
-  { value: 1240,  suffix: "+",     label: "Активных аренд" },
-  { value: 48,    suffix: "k SOL", label: "Залог в escrow" },
-];
+import { useLanguage } from "@/components/LanguageProvider";
 
 function CountUp({ target, suffix, active }: { target: number; suffix: string; active: boolean }) {
   const [current, setCurrent] = useState(0);
@@ -28,6 +22,14 @@ function CountUp({ target, suffix, active }: { target: number; suffix: string; a
 export const Stats = () => {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-60px" });
+  const { t } = useLanguage();
+
+  const stats = [
+    { value: 400,   suffix: "мс",   label: t.stats.finalization },
+    { value: null,  display: "~$0",  label: t.stats.fee },
+    { value: 1240,  suffix: "+",     label: t.stats.activeRentals },
+    { value: 48,    suffix: "k SOL", label: t.stats.escrowCollateral },
+  ];
 
   return (
     <section ref={ref} className="py-8 px-4" style={{ borderBottom: "1px solid var(--divider)" }}>

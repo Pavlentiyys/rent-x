@@ -1,5 +1,6 @@
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { LanguageProvider } from "@/components/LanguageProvider";
 import { SolanaProviders } from "./providers";
 import { WalletProvider } from "@/components/ui/WalletContext";
 import { WalletConnectModal } from "@/components/ui/WalletConnectModal";
@@ -30,8 +31,10 @@ export default function RootLayout({
         <SolanaProviders>
           <WalletProvider>
             <ThemeProvider>
-              {children}
-              <WalletConnectModal />
+              <LanguageProvider>
+                {children}
+                <WalletConnectModal />
+              </LanguageProvider>
             </ThemeProvider>
           </WalletProvider>
         </SolanaProviders>

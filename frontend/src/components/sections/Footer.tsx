@@ -1,27 +1,24 @@
+"use client";
 import Link from "next/link";
+import { useLanguage } from "@/components/LanguageProvider";
 
-const columns = [
-  {
-    title: "Платформа",
-    links: [
-      { label: "Каталог",    href: "#catalog" },
-      { label: "Маркетплейс", href: "#why-rentx" },
-      { label: "Для хостов", href: "#how-it-works" },
-      { label: "Dashboard",  href: "#" },
-    ],
-  },
-  {
-    title: "Разработка",
-    links: [
-      { label: "Документация",   href: "#docs" },
-      { label: "Smart Contract", href: "#" },
-      { label: "GitHub",         href: "#" },
-      { label: "Devnet Explorer", href: "#" },
-    ],
-  },
-];
+const platformHrefs = ["#catalog", "#why-rentx", "#how-it-works", "#"];
+const devHrefs = ["#docs", "#", "#", "#"];
 
 export const Footer = () => {
+  const { t } = useLanguage();
+
+  const columns = [
+    {
+      title: t.footer.platform,
+      links: t.footer.platformLinks.map((label, i) => ({ label, href: platformHrefs[i] })),
+    },
+    {
+      title: t.footer.development,
+      links: t.footer.devLinks.map((label, i) => ({ label, href: devHrefs[i] })),
+    },
+  ];
+
   return (
     <footer style={{ borderTop: "1px solid var(--divider)" }}>
       <div className="max-w-6xl mx-auto px-6 py-14">
@@ -34,8 +31,7 @@ export const Footer = () => {
               RentX
             </span>
             <p className="text-sm leading-relaxed mb-5" style={{ color: "var(--text-3)" }}>
-              Децентрализованная платформа быстрой аренды на блокчейне Solana.
-              Никаких бумаг — только подпись.
+              {t.footer.description}
             </p>
             <div
               className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full"
@@ -77,11 +73,11 @@ export const Footer = () => {
           style={{ borderTop: "1px solid var(--divider)" }}
         >
           <p className="text-xs" style={{ color: "var(--text-4)" }}>
-            2026 RentX. Все права защищены.
+            {t.footer.rights}
           </p>
           <p className="text-xs flex items-center gap-1.5" style={{ color: "var(--text-4)" }}>
             <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-            Solana · ~400мс · $0.00025 комиссия
+            {t.footer.stats}
           </p>
         </div>
       </div>

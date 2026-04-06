@@ -1,6 +1,7 @@
 "use client";
 import { motion } from "framer-motion";
 import { useWalletContext } from "@/components/ui/WalletContext";
+import { useLanguage } from "@/components/LanguageProvider";
 import { SolanaCoinsWrapper } from "@/components/ui/SolanaCoinsWrapper";
 
 const fade = (delay: number) => ({
@@ -11,6 +12,7 @@ const fade = (delay: number) => ({
 
 export const Hero = () => {
   const { openModal } = useWalletContext();
+  const { t } = useLanguage();
 
   return (
     <section
@@ -57,7 +59,7 @@ export const Hero = () => {
             filter: "blur(80px)",
           }}
         />
-        {/* orrb B  right */}
+        {/* orb B right */}
         <div
           className="animate-orb-b absolute"
           style={{
@@ -99,16 +101,14 @@ export const Hero = () => {
       <div className="relative z-10 max-w-3xl mx-auto">
         <motion.h1
           {...fade(0.05)}
-          className="font-bold leading-tight mb-5"
+          className="font-bold leading-tight mb-5 whitespace-pre-line"
           style={{
             fontSize: "clamp(2.8rem, 7vw, 5rem)",
             letterSpacing: "-0.02em",
             color: "var(--text-1)",
           }}
         >
-          Превратите свои активы в
-          <br />
-          поток пассивного дохода.
+          {t.hero.title}
         </motion.h1>
 
         <motion.p
@@ -116,8 +116,7 @@ export const Hero = () => {
           className="mb-10 max-w-md mx-auto leading-relaxed text-xl"
           style={{ color: "var(--text-2)" }}
         >
-          Никаких бумаг и ожиданий — подключил кошелёк, подписал транзакцию и
-          забрал товар. 400 мс финализация. Escrow-безопасность.
+          {t.hero.subtitle}
         </motion.p>
 
         <motion.div
@@ -134,7 +133,7 @@ export const Hero = () => {
               color: "var(--text-1)",
             }}
           >
-            Начать аренду
+            {t.hero.startRenting}
           </motion.button>
           <motion.button
             whileTap={{ scale: 0.97 }}
@@ -145,7 +144,7 @@ export const Hero = () => {
               color: "var(--text-2)",
             }}
           >
-            Разместить товар
+            {t.hero.listItem}
           </motion.button>
         </motion.div>
       </div>

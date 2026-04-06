@@ -1,39 +1,16 @@
 "use client";
 import { Shield, Smartphone, ArrowLeftRight, Coins } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { useLanguage } from "@/components/LanguageProvider";
 
-interface Feature {
-  icon: LucideIcon;
-  title: string;
-  description: string;
-}
-
-const features: Feature[] = [
-  {
-    icon: Shield,
-    title: "Неизменяемое Владение",
-    description: "Каждая аренда записывается как NFT на Solana. Это ваш ключ — его нельзя подделать или отозвать.",
-  },
-  {
-    icon: Smartphone,
-    title: "Мгновенная Верификация",
-    description: "Никаких бумажных ваучеров. Ваш кошелёк — ваш ключ. Верифицируйте аренду по простому QR.",
-  },
-  {
-    icon: ArrowLeftRight,
-    title: "Вторичный Рынок",
-    description: "Изменились планы? Не отменяйте. Продайте NFT аренды на P2P-маркетплейсе и верните деньги.",
-  },
-  {
-    icon: Coins,
-    title: "DeFi Интеграция",
-    description: "Используйте NFT аренды как залог или зарабатывайте награды за частые поездки.",
-  },
-];
-
-const marqueeItems = [...features, ...features];
+const icons: LucideIcon[] = [Shield, Smartphone, ArrowLeftRight, Coins];
 
 export const Features = () => {
+  const { t } = useLanguage();
+
+  const items = t.features.items.map((item, i) => ({ ...item, icon: icons[i] }));
+  const marqueeItems = [...items, ...items];
+
   return (
     <section id="features" className="py-20" style={{ borderTop: "1px solid var(--divider)" }}>
       <div className="max-w-5xl mx-auto px-6 mb-14 text-center">
@@ -41,7 +18,7 @@ export const Features = () => {
           className="text-3xl md:text-4xl font-bold"
           style={{ letterSpacing: "-0.02em", color: "var(--text-1)" }}
         >
-          Ключевые Возможности
+          {t.features.title}
         </h2>
       </div>
 

@@ -3,12 +3,14 @@ import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { motion, useInView } from "framer-motion";
 import { useWalletContext } from "@/components/ui/WalletContext";
+import { useLanguage } from "@/components/LanguageProvider";
 import { fetchPosts, type Post } from "@/lib/api-client";
 
 type RentState = "idle" | "signing" | "done";
 
 function CatalogCard({ item, index, inView }: { item: Post; index: number; inView: boolean }) {
   const { address, openModal } = useWalletContext();
+  const { t } = useLanguage();
   const [rentState, setRentState] = useState<RentState>("idle");
 
   const imageUrl = item.images?.[0]?.url || `https://picsum.photos/seed/item-${item.id}/400/220`;
@@ -72,14 +74,14 @@ function CatalogCard({ item, index, inView }: { item: Post; index: number; inVie
               style={{ background: "rgba(16,185,129,0.12)", border: "1px solid rgba(16,185,129,0.25)", color: "#059669" }}
             >
               <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-              Доступно
+              {t.catalog.available}
             </span>
           ) : (
             <span
               className="text-[10px] font-bold px-2.5 py-1 rounded-full"
               style={{ background: "var(--surface)", color: "var(--text-3)" }}
             >
-              Арендовано
+              {t.catalog.rented}
             </span>
           )}
         </div>
@@ -95,13 +97,13 @@ function CatalogCard({ item, index, inView }: { item: Post; index: number; inVie
             <div className="font-bold text-lg leading-none" style={{ color: "var(--text-1)" }}>
               {item.pricePerDay} SOL
             </div>
-            <div className="text-[11px] mt-0.5" style={{ color: "var(--text-3)" }}>в день</div>
+            <div className="text-[11px] mt-0.5" style={{ color: "var(--text-3)" }}>{t.catalog.perDay}</div>
           </div>
           <div className="text-right">
             <div className="text-[13px] font-semibold" style={{ color: "var(--text-2)" }}>
               {item.deposit} SOL
             </div>
-            <div className="text-[11px]" style={{ color: "var(--text-3)" }}>залог</div>
+            <div className="text-[11px]" style={{ color: "var(--text-3)" }}>{t.catalog.deposit}</div>
           </div>
         </div>
 
@@ -125,11 +127,11 @@ function CatalogCard({ item, index, inView }: { item: Post; index: number; inVie
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
               </svg>
-              Подпись Phantom…
+              {t.catalog.signing}
             </span>
           )}
-          {rentState === "done" && "✓ Аренда оформлена!"}
-          {rentState === "idle" && (!isAvailable ? "Недоступно" : "Арендовать")}
+          {rentState === "done" && t.catalog.done}
+          {rentState === "idle" && (!isAvailable ? t.catalog.unavailable : t.catalog.rent)}
         </button>
       </div>
     </motion.div>
@@ -139,6 +141,7 @@ function CatalogCard({ item, index, inView }: { item: Post; index: number; inVie
 export const Catalog = () => {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-60px" });
+  const { t } = useLanguage();
   const [items, setItems] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -149,7 +152,6 @@ export const Catalog = () => {
       .then((res) => setItems(res.data))
       .catch((err) => {
         console.error("Failed to fetch catalog items:", err);
-        // Fallback to placeholder data
         setItems([]);
       })
       .finally(() => setLoading(false));
@@ -168,10 +170,10 @@ export const Catalog = () => {
             className="text-3xl md:text-4xl font-bold mb-3"
             style={{ letterSpacing: "-0.02em", color: "var(--text-1)" }}
           >
-            Каталог товаров
+            {t.catalog.title}
           </h2>
           <p className="text-sm max-w-md mx-auto" style={{ color: "var(--text-3)" }}>
-            Каждая аренда — это NFT на Solana. Верифицируй QR-кодом, перепродай на маркетплейсе.
+            {t.catalog.subtitle}
           </p>
         </motion.div>
 
@@ -192,7 +194,7 @@ export const Catalog = () => {
           </div>
         ) : (
           <div className="text-center py-12" style={{ color: "var(--text-3)" }}>
-            Товары не найдены. Убедитесь, что backend запущен на localhost:3001
+            {t.catalog.empty}
           </div>
         )}
       </div>
