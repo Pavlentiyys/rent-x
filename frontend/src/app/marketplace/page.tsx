@@ -31,7 +31,7 @@ function ListingCard({ item, index }: { item: Post; index: number }) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: index * 0.04, ease: "easeOut" }}
-      whileHover={isAvailable ? { y: -3 } : {}}
+     whileHover={isAvailable ? { y: -3 } : {}}
       className="rounded-[24px] overflow-hidden flex flex-col"
       style={{
         background: "var(--surface)",
@@ -195,7 +195,7 @@ export default function MarketplacePage() {
               Маркетплейс
             </h1>
             <p className="text-sm mt-1" style={{ color: "var(--text-3)" }}>
-              {loading ? "Загрузка..." : `${filtered.length} объявлений`} · NFT-аренда на Solana
+              {items.length} объявлений · NFT-аренда на Solana
             </p>
           </div>
 
@@ -266,25 +266,16 @@ export default function MarketplacePage() {
         </div>
 
         {/* Grid */}
-        {loading ? (
-          <div className="flex justify-center py-12">
-            <div className="animate-spin">
-              <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-              </svg>
-            </div>
-          </div>
-        ) : filtered.length > 0 ? (
+        {items.length > 0 ? (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-16">
-            {filtered.map((item, i) => (
+            {items.map((item, i) => (
               <ListingCard key={item.id} item={item} index={i} />
             ))}
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-24 gap-3">
             <span className="text-4xl">🔍</span>
-            <p className="text-sm font-medium" style={{ color: "var(--text-3)" }}>{items.length === 0 ? "Товары не найдены. Убедитесь, что backend запущен." : "Ничего не найдено"}</p>
+            <p className="text-sm font-medium" style={{ color: "var(--text-3)" }}>Ничего не найдено</p>
             <button onClick={() => { setQuery(""); setCat("Все"); }}
               className="text-xs px-4 py-2 rounded-full cursor-pointer"
               style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-2)" }}>
