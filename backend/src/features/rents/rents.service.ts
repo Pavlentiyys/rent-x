@@ -99,6 +99,7 @@ export class RentsService {
         totalAmount: totalAmount.toFixed(6),
         currencyMint: post.currencyMint,
         status: RentStatus.Pending,
+        paymentTxSignature: dto.paymentTxSignature ?? null,
       }),
     );
 
@@ -138,7 +139,7 @@ export class RentsService {
         { renterId: actorUserId },
       ],
       relations: {
-        post: true,
+        post: { images: true, owner: true },
         owner: true,
         renter: true,
         events: true,
@@ -153,7 +154,7 @@ export class RentsService {
     const rent = await this.rentsRepository.findOne({
       where: { id },
       relations: {
-        post: true,
+        post: { images: true, owner: true },
         owner: true,
         renter: true,
         events: true,
@@ -222,7 +223,11 @@ export class RentsService {
   async handover(id: number, actorUserId: number) {
     const rent = await this.findOne(id, actorUserId);
     this.assertOwner(rent, actorUserId);
-    this.assertStatus(rent, [RentStatus.Paid], 'Only paid rents can be handed over');
+    this.assertStatus(
+      rent,
+      [RentStatus.Pending, RentStatus.Approved, RentStatus.Paid],
+      'Only pending/approved/paid rents can be handed over',
+    );
 
     const updatedRent = await this.transitionStatus(
       rent,
@@ -235,13 +240,21 @@ export class RentsService {
     return updatedRent;
   }
 
-  async complete(id: number, actorUserId: number) {
+  async requestReturn(id: number, actorUserId: number) {
+    const rent = await this.findOne(id, actorUserId);
+    this.assertRenter(rent, actorUserId);
+    this.assertStatus(rent, [RentStatus.Active], 'Only active rents can be returned');
+
+    return this.transitionStatus(rent, RentStatus.ReturnRequested, actorUserId, 'rent.return_requested');
+  }
+
+  async complete(id: number, actorUserId: number, returnTxSignature?: string) {
     const rent = await this.findOne(id, actorUserId);
     this.assertOwner(rent, actorUserId);
     this.assertStatus(
       rent,
-      [RentStatus.Active, RentStatus.Disputed],
-      'Only active or disputed rents can be completed',
+      [RentStatus.Active, RentStatus.ReturnRequested, RentStatus.Disputed],
+      'Only active, return_requested or disputed rents can be completed',
     );
 
     const updatedRent = await this.transitionStatus(
@@ -249,6 +262,7 @@ export class RentsService {
       RentStatus.Completed,
       actorUserId,
       'rent.completed',
+      returnTxSignature ? { returnTxSignature } : undefined,
     );
 
     await this.restorePostAvailabilityIfNeeded(rent.postId);

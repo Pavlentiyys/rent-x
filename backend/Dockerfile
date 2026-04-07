@@ -11,4 +11,4 @@ RUN find . -name "*.spec.ts" -delete 2>/dev/null || true
 RUN yarn build
 
 EXPOSE 8000
-CMD ["node", "dist/src/main"]
+CMD ["node", "dist/main"]

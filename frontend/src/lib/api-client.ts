@@ -52,6 +52,7 @@ export interface Post {
   depositAmount: string;
   currencyMint: string;
   location: string | null;
+  contactInfo: string | null;
   status: string;
   availableFrom: string | null;
   availableTo: string | null;
@@ -72,7 +73,11 @@ export interface Rent {
   totalAmount: string;
   status: string;
   cancelReason: string | null;
+  paymentTxSignature: string | null;
+  returnTxSignature: string | null;
   post: Post | null;
+  owner: Pick<UserProfile, 'id' | 'walletAddress' | 'username' | 'displayName'> | null;
+  renter: Pick<UserProfile, 'id' | 'walletAddress' | 'username' | 'displayName'> | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -231,6 +236,7 @@ export interface CreatePostData {
   currencyMint: string;
   status?: "draft" | "active";
   location?: string;
+  contactInfo?: string;
   availableFrom?: string;
   availableTo?: string;
   images?: { objectKey: string; url: string; sortOrder?: number }[];
@@ -262,12 +268,24 @@ export async function getUploadUrl(
 }
 
 export async function uploadFileToStorage(uploadUrl: string, file: File): Promise<void> {
-  const response = await fetch(uploadUrl, {
-    method: 'PUT',
-    headers: { 'Content-Type': file.type },
-    body: file,
-  });
-  if (!response.ok) throw new Error(`Upload failed: ${response.status}`);
+  console.log(`[uploadFileToStorage] PUT ${uploadUrl} | type=${file.type} size=${file.size}`);
+  let response: Response;
+  try {
+    response = await fetch(uploadUrl, {
+      method: 'PUT',
+      headers: { 'Content-Type': file.type },
+      body: file,
+    });
+  } catch (networkErr) {
+    console.error(`[uploadFileToStorage] network error:`, networkErr);
+    throw networkErr;
+  }
+  console.log(`[uploadFileToStorage] response status=${response.status} ok=${response.ok}`);
+  if (!response.ok) {
+    const body = await response.text().catch(() => '');
+    console.error(`[uploadFileToStorage] error body:`, body);
+    throw new Error(`Upload failed: ${response.status} ${body}`);
+  }
 }
 
 export async function updatePost(
@@ -319,4 +337,65 @@ export async function fetchMyRents(token: string) {
   }
 
   return response.json() as Promise<Rent[]>;
+}
+
+export async function handoverRent(token: string, rentId: number): Promise<Rent> {
+  const response = await fetch(`${API_BASE_URL}/rents/${rentId}/handover`, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${token}` },
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error((err as { message?: string }).message || 'Failed to handover rent');
+  }
+  return response.json();
+}
+
+export async function requestReturnRent(token: string, rentId: number): Promise<Rent> {
+  const response = await fetch(`${API_BASE_URL}/rents/${rentId}/request-return`, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${token}` },
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error((err as { message?: string }).message || 'Failed to request return');
+  }
+  return response.json();
+}
+
+export async function completeRent(token: string, rentId: number, returnTxSignature?: string): Promise<Rent> {
+  const response = await fetch(`${API_BASE_URL}/rents/${rentId}/complete`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+    body: JSON.stringify({ returnTxSignature }),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error((err as { message?: string }).message || 'Failed to complete rent');
+  }
+  return response.json();
+}
+
+export async function createRent(
+  token: string,
+  postId: number,
+  startDate: string,
+  endDate: string,
+  txSignature?: string,
+) {
+  const response = await fetch(`${API_BASE_URL}/rents`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify({ postId, startDate, endDate, paymentTxSignature: txSignature }),
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error((err as { message?: string }).message || 'Failed to create rent');
+  }
+
+  return response.json() as Promise<Rent>;
 }

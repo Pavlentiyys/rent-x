@@ -21,11 +21,13 @@ interface WalletContextType {
   userProfile: UserProfile | null;
   needsVerification: boolean;
   isModalOpen: boolean;
+  siwsError: string | null;
   openModal: () => void;
   closeModal: () => void;
   connect: () => Promise<void>;
   disconnect: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  retryAuth: () => void;
 }
 
 const WalletContext = createContext<WalletContextType>({
@@ -36,11 +38,13 @@ const WalletContext = createContext<WalletContextType>({
   userProfile: null,
   needsVerification: false,
   isModalOpen: false,
+  siwsError: null,
   openModal: () => {},
   closeModal: () => {},
   connect: async () => {},
   disconnect: async () => {},
   refreshProfile: async () => {},
+  retryAuth: () => {},
 });
 
 export function WalletProvider({ children }: { children: ReactNode }) {
@@ -48,6 +52,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const [authToken, setAuthTokenState] = useState<string | null>(() => getAuthToken());
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [needsVerification, setNeedsVerification] = useState(false);
+  const [siwsError, setSiwsError] = useState<string | null>(null);
+  const [siwsRetry, setSiwsRetry] = useState(0);
   const router = useRouter();
 
   const {
@@ -90,11 +96,17 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const retryAuth = useCallback(() => {
+    setSiwsError(null);
+    setSiwsRetry((n) => n + 1);
+  }, []);
+
   // SIWS: authenticate when wallet connects
   useEffect(() => {
     if (!connected || !publicKey || !signMessage || authToken) return;
 
     const address = publicKey.toBase58();
+    setSiwsError(null);
 
     (async () => {
       try {
@@ -112,9 +124,11 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         setNeedsVerification(!profile.documentUrl);
       } catch (err) {
         console.error("SIWS authentication failed:", err);
+        setSiwsError("Ошибка аутентификации. Попробуйте ещё раз.");
       }
     })();
-  }, [connected, publicKey, signMessage, authToken]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [connected, publicKey, signMessage, authToken, siwsRetry]);
 
   // Restore profile from stored token on mount
   useEffect(() => {
@@ -141,11 +155,13 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         userProfile,
         needsVerification,
         isModalOpen,
+        siwsError,
         openModal,
         closeModal,
         connect,
         disconnect,
         refreshProfile,
+        retryAuth,
       }}
     >
       {children}

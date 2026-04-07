@@ -1,90 +1,97 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Client as MinioClient } from 'minio';
+import {
+  S3Client,
+  CreateBucketCommand,
+  HeadBucketCommand,
+  PutBucketPolicyCommand,
+  PutObjectCommand,
+} from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { CreateFileUploadDto } from './dto/create-file-upload.dto';
 
 @Injectable()
 export class FilesService implements OnModuleInit {
-  private readonly client: MinioClient;
+  private readonly client: S3Client;
   private readonly bucketName: string;
   private readonly publicBaseUrl: string;
   private readonly logger = new Logger(FilesService.name);
 
   constructor(private readonly configService: ConfigService) {
-    const endPoint = this.configService.get<string>('MINIO_ENDPOINT', 'localhost');
-    const port = Number(this.configService.get<string>('MINIO_INTERNAL_PORT', '9000'));
-    const useSSL = this.configService.get<string>('MINIO_USE_SSL', 'false') === 'true';
+    const endpoint = this.configService.get<string>('S3_ENDPOINT');
+    const region = this.configService.get<string>('S3_REGION', 'ap-southeast-1');
 
-    this.client = new MinioClient({
-      endPoint,
-      port,
-      useSSL,
-      accessKey: this.configService.get<string>('MINIO_ACCESS_KEY', 'minioadmin'),
-      secretKey: this.configService.get<string>('MINIO_SECRET_KEY', 'minioadmin'),
+    this.client = new S3Client({
+      endpoint,
+      region,
+      credentials: {
+        accessKeyId: this.configService.get<string>('S3_ACCESS_KEY', ''),
+        secretAccessKey: this.configService.get<string>('S3_SECRET_KEY', ''),
+      },
+      forcePathStyle: true,
     });
 
-    this.bucketName = this.configService.get<string>('MINIO_BUCKET', 'rentx');
-    this.publicBaseUrl = this.configService.get<string>(
-      'MINIO_PUBLIC_URL',
-      `${useSSL ? 'https' : 'http'}://${endPoint}:${port}`,
-    );
+    this.bucketName = this.configService.get<string>('S3_BUCKET', 'rentx');
+    this.publicBaseUrl = this.configService.get<string>('S3_PUBLIC_URL', '');
   }
 
-  async onModuleInit() {
+  onModuleInit() {
+    this.initBucket().catch(() => {});
+  }
+
+  private async initBucket() {
     try {
-      const bucketExists = await this.client.bucketExists(this.bucketName);
-
-      if (!bucketExists) {
-        await this.client.makeBucket(this.bucketName);
-        this.logger.log(
-          JSON.stringify({
-            event: 'files.bucket_created',
-            bucket: this.bucketName,
-          }),
-        );
+      await this.client.send(new HeadBucketCommand({ Bucket: this.bucketName }));
+      this.logger.log(JSON.stringify({ event: 'files.bucket_exists', bucket: this.bucketName }));
+    } catch (err: any) {
+      if (err?.name === 'NotFound' || err?.$metadata?.httpStatusCode === 404) {
+        try {
+          await this.client.send(new CreateBucketCommand({ Bucket: this.bucketName }));
+          this.logger.log(JSON.stringify({ event: 'files.bucket_created', bucket: this.bucketName }));
+        } catch (createErr) {
+          this.logger.warn(JSON.stringify({ event: 'files.bucket_create_failed', error: String(createErr) }));
+        }
+      } else {
+        this.logger.warn(JSON.stringify({ event: 'files.bucket_check_failed', error: String(err) }));
       }
-
-      // Set public read policy so uploaded images are accessible without auth
-      const policy = JSON.stringify({
-        Version: '2012-10-17',
-        Statement: [
-          {
-            Effect: 'Allow',
-            Principal: { AWS: ['*'] },
-            Action: ['s3:GetObject'],
-            Resource: [`arn:aws:s3:::${this.bucketName}/*`],
-          },
-        ],
-      });
-      await this.client.setBucketPolicy(this.bucketName, policy);
-      this.logger.log(JSON.stringify({ event: 'files.minio_ready', bucket: this.bucketName }));
-    } catch (err) {
-      this.logger.warn(
-        JSON.stringify({ event: 'files.minio_unavailable', error: String(err) }),
-      );
     }
   }
 
   async createUploadUrl(dto: CreateFileUploadDto, ownerId: number) {
     const objectKey = this.buildObjectKey(dto.fileName, ownerId);
-    const uploadUrl = await this.client.presignedPutObject(this.bucketName, objectKey, 15 * 60);
 
-    this.logger.log(
-      JSON.stringify({
-        event: 'files.upload_url_created',
-        ownerId,
-        bucket: this.bucketName,
-        objectKey,
-        contentType: dto.contentType,
-        size: dto.size,
-      }),
-    );
+    this.logger.log(JSON.stringify({
+      event: 'files.presign_start',
+      bucket: this.bucketName,
+      objectKey,
+    }));
+
+    const command = new PutObjectCommand({
+      Bucket: this.bucketName,
+      Key: objectKey,
+      ContentType: dto.contentType,
+    });
+
+    let uploadUrl: string;
+    try {
+      uploadUrl = await getSignedUrl(this.client, command, { expiresIn: 15 * 60 });
+    } catch (err) {
+      this.logger.error(JSON.stringify({ event: 'files.presign_failed', error: String(err) }));
+      throw err;
+    }
+
+    this.logger.log(JSON.stringify({
+      event: 'files.upload_url_created',
+      ownerId,
+      bucket: this.bucketName,
+      objectKey,
+    }));
 
     return {
       bucket: this.bucketName,
       objectKey,
       uploadUrl,
-      fileUrl: `${this.publicBaseUrl}/${this.bucketName}/${objectKey}`,
+      fileUrl: `${this.publicBaseUrl}/${objectKey}`,
       expiresInSeconds: 15 * 60,
       contentType: dto.contentType,
       size: dto.size,

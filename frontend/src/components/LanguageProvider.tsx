@@ -44,6 +44,25 @@ export type Translations = {
     rights: string;
     stats: string;
   };
+  dashboard: {
+    title: string;
+    balance: string;
+    activeRentals: string;
+    myListings: string;
+    totalRentals: string;
+    rentedByMe: string;
+    myRentals: string;
+    noRentedByMe: string;
+    noMyRentals: string;
+    findMore: string;
+    addListing: string;
+    ownerContacts: string;
+    handover: string;
+    returnItem: string;
+    confirmReturn: string;
+    loading: string;
+    goMarketplace: string;
+  };
 };
 
 const translations: Record<Lang, Translations> = {
@@ -119,6 +138,25 @@ const translations: Record<Lang, Translations> = {
       rights: "2026 RentX. Все права защищены.",
       stats: "Solana · ~400мс · $0.00025 комиссия",
     },
+    dashboard: {
+      title: "Мой кабинет",
+      balance: "Баланс",
+      activeRentals: "Активных аренд",
+      myListings: "Мои листинги",
+      totalRentals: "Всего аренд",
+      rentedByMe: "Взял в аренду",
+      myRentals: "Мои аренды",
+      noRentedByMe: "Вы ничего не арендовали",
+      noMyRentals: "Никто ещё не арендовал ваши товары",
+      findMore: "Найти ещё",
+      addListing: "Добавить",
+      ownerContacts: "Контакты владельца",
+      handover: "Передать арендатору",
+      returnItem: "Вернуть товар",
+      confirmReturn: "Забрал предмет",
+      loading: "Загрузка…",
+      goMarketplace: "Перейти в маркетплейс →",
+    },
   },
   en: {
     nav: { catalog: "Catalog", marketplace: "Marketplace", faq: "FAQ" },
@@ -192,6 +230,25 @@ const translations: Record<Lang, Translations> = {
       rights: "2026 RentX. All rights reserved.",
       stats: "Solana · ~400ms · $0.00025 fee",
     },
+    dashboard: {
+      title: "My Cabinet",
+      balance: "Balance",
+      activeRentals: "Active Rentals",
+      myListings: "My Listings",
+      totalRentals: "Total Rentals",
+      rentedByMe: "Rented by me",
+      myRentals: "My Rentals",
+      noRentedByMe: "You haven't rented anything",
+      noMyRentals: "Nobody has rented your items yet",
+      findMore: "Find more",
+      addListing: "Add",
+      ownerContacts: "Owner contacts",
+      handover: "Hand over to renter",
+      returnItem: "Return item",
+      confirmReturn: "Confirmed return",
+      loading: "Loading…",
+      goMarketplace: "Go to marketplace →",
+    },
   },
   kz: {
     nav: { catalog: "Каталог", marketplace: "Нарық", faq: "FAQ" },
@@ -264,6 +321,25 @@ const translations: Record<Lang, Translations> = {
       devLinks: ["Құжаттама", "Smart Contract", "GitHub", "Devnet Explorer"],
       rights: "2026 RentX. Барлық құқықтар қорғалған.",
       stats: "Solana · ~400мс · $0.00025 комиссия",
+    },
+    dashboard: {
+      title: "Менің кабинетім",
+      balance: "Баланс",
+      activeRentals: "Белсенді жалдаулар",
+      myListings: "Менің листингтерім",
+      totalRentals: "Барлық жалдаулар",
+      rentedByMe: "Жалдаған тауарлар",
+      myRentals: "Менің жалдауларым",
+      noRentedByMe: "Сіз ештеңе жалдаған жоқсыз",
+      noMyRentals: "Ешкім сіздің тауарларыңызды жалдаған жоқ",
+      findMore: "Тағы табу",
+      addListing: "Қосу",
+      ownerContacts: "Иесінің байланысы",
+      handover: "Жалдаушыға беру",
+      returnItem: "Тауарды қайтару",
+      confirmReturn: "Заттды алдым",
+      loading: "Жүктелуде…",
+      goMarketplace: "Нарыққа өту →",
     },
   },
 };

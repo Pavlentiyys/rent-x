@@ -89,6 +89,12 @@ export class CreatePostDto {
   @MaxLength(255)
   location?: string;
 
+  @ApiPropertyOptional({ example: 'Telegram: @username, WhatsApp: +7 777 123 45 67' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  contactInfo?: string;
+
   @ApiPropertyOptional({ enum: PostStatus })
   @IsOptional()
   @IsEnum(PostStatus)

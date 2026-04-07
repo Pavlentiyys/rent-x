@@ -19,6 +19,7 @@ import { ApiCommonErrorResponses } from '../../common/swagger/api-common-error-r
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import type { AuthenticatedUser } from '../auth/interfaces/authenticated-user.interface';
+import { CompleteRentDto } from './dto/complete-rent.dto';
 import { CreateRentDto } from './dto/create-rent.dto';
 import { DisputeRentDto } from './dto/dispute-rent.dto';
 import { RejectRentDto } from './dto/reject-rent.dto';
@@ -99,7 +100,7 @@ export class RentsController {
     return this.rentsService.markPaid(id, currentUser.userId).then(serializeRent);
   }
 
-  @ApiOperation({ summary: 'Confirm handover and activate rent' })
+  @ApiOperation({ summary: 'Handover item to renter (owner confirms physical handover)' })
   @ApiOkResponse({ type: RentResponseDto })
   @ApiCommonErrorResponses(401, 403, 404, 409)
   @Post(':id/handover')
@@ -110,15 +111,27 @@ export class RentsController {
     return this.rentsService.handover(id, currentUser.userId).then(serializeRent);
   }
 
-  @ApiOperation({ summary: 'Complete active or disputed rent' })
+  @ApiOperation({ summary: 'Renter requests return of item' })
+  @ApiOkResponse({ type: RentResponseDto })
+  @ApiCommonErrorResponses(401, 403, 404, 409)
+  @Post(':id/request-return')
+  requestReturn(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() currentUser: AuthenticatedUser,
+  ) {
+    return this.rentsService.requestReturn(id, currentUser.userId).then(serializeRent);
+  }
+
+  @ApiOperation({ summary: 'Owner confirms item returned, completes rent' })
   @ApiOkResponse({ type: RentResponseDto })
   @ApiCommonErrorResponses(401, 403, 404, 409)
   @Post(':id/complete')
   complete(
     @Param('id', ParseIntPipe) id: number,
+    @Body() dto: CompleteRentDto,
     @CurrentUser() currentUser: AuthenticatedUser,
   ) {
-    return this.rentsService.complete(id, currentUser.userId).then(serializeRent);
+    return this.rentsService.complete(id, currentUser.userId, dto.returnTxSignature).then(serializeRent);
   }
 
   @ApiOperation({ summary: 'Cancel pending or approved rent' })

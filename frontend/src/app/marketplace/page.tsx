@@ -256,7 +256,8 @@ export default function MarketplacePage() {
             <p className="font-bold text-base" style={{ color: "var(--text-1)" }}>Есть что сдать в аренду?</p>
             <p className="text-sm mt-0.5" style={{ color: "var(--text-3)" }}>Разместите объявление и зарабатывайте SOL</p>
           </div>
-          <button
+          <Link
+            href="/create-listing"
             className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold cursor-pointer"
             style={{
               background: "linear-gradient(135deg, #2B44D0, #1B2BB8)",
@@ -265,7 +266,7 @@ export default function MarketplacePage() {
             }}
           >
             Разместить объявление <ArrowUpRight size={15} />
-          </button>
+          </Link>
         </div>
       </div>
     </div>

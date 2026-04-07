@@ -368,7 +368,7 @@ export default function EditListingPage() {
                     )}
 
                     {/* Remove button */}
-                    {!img.uploading && (
+                    {(img.kind !== "pending" || !img.uploading) && (
                       <button
                         type="button"
                         onClick={() => removeImage(idx)}

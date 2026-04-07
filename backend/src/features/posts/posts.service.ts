@@ -74,6 +74,7 @@ export class PostsService {
         depositAmount: dto.depositAmount,
         currencyMint: dto.currencyMint,
         location: dto.location ?? null,
+        contactInfo: dto.contactInfo ?? null,
         status: dto.status ?? PostStatus.Draft,
         availableFrom: dto.availableFrom ? new Date(dto.availableFrom) : null,
         availableTo: dto.availableTo ? new Date(dto.availableTo) : null,
@@ -207,6 +208,7 @@ export class PostsService {
       depositAmount: dto.depositAmount,
       currencyMint: dto.currencyMint,
       location: dto.location,
+      contactInfo: dto.contactInfo ?? post.contactInfo,
       availableFrom: nextAvailableFrom,
       availableTo: nextAvailableTo,
     });

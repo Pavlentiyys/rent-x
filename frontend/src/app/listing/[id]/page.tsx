@@ -24,10 +24,12 @@ import {
 } from "lucide-react";
 import { Header } from "@/components/sections/Header";
 import { useWalletContext } from "@/components/ui/WalletContext";
-import { fetchPostById, type Post } from "@/lib/api-client";
+import { fetchPostById, createRent, type Post } from "@/lib/api-client";
 import {
   rentItem,
   getListingPDA,
+  getRentalPDA,
+  fetchRentalAgreement,
   userProfileExists,
   initializeUser,
   toListingSeed,
@@ -38,7 +40,7 @@ type RentStep = "idle" | "init_user" | "signing" | "done" | "error";
 export default function ListingPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  const { address, openModal } = useWalletContext();
+  const { address, openModal, authToken } = useWalletContext();
   const { connection } = useConnection();
   const anchorWallet = useAnchorWallet();
 
@@ -48,6 +50,7 @@ export default function ListingPage() {
   const [imgIndex, setImgIndex] = useState(0);
   const [rentStep, setRentStep] = useState<RentStep>("idle");
   const [rentError, setRentError] = useState<string | null>(null);
+  const [days, setDays] = useState(1);
 
   useEffect(() => {
     fetchPostById(Number(id))
@@ -69,16 +72,54 @@ export default function ListingPage() {
         await initializeUser(connection, anchorWallet);
       }
 
+      // Check balance
+      const balance = await connection.getBalance(anchorWallet.publicKey);
+      const totalSol = priceNum * days + depositNum;
+      const totalLamports = totalSol * LAMPORTS_PER_SOL;
+      const feeLamports = 0.01 * LAMPORTS_PER_SOL; // tx fee buffer
+      if (balance < totalLamports + feeLamports) {
+        const balanceSol = (balance / LAMPORTS_PER_SOL).toFixed(4);
+        setRentError(`Недостаточно SOL. Нужно ~${totalSol.toFixed(4)} SOL (цена + залог), у вас ${balanceSol} SOL`);
+        setRentStep("error");
+        return;
+      }
+
       setRentStep("signing");
 
       const ownerPubkey = new PublicKey(post.owner.walletAddress);
       const [listingPDA] = getListingPDA(ownerPubkey, toListingSeed(post.title));
 
-      const now = Math.floor(Date.now() / 1000);
-      const startTime = new BN(now);
-      const endTime = new BN(now + 7 * 86400);
+      // Check if rental PDA already exists
+      const [rentalPDA] = getRentalPDA(anchorWallet.publicKey, listingPDA);
+      const existingRental = await fetchRentalAgreement(connection, anchorWallet, rentalPDA);
+      if (existingRental) {
+        setRentError("Вы уже арендуете этот товар. Дождитесь окончания текущей аренды.");
+        setRentStep("error");
+        return;
+      }
 
-      await rentItem(connection, anchorWallet, listingPDA, startTime, endTime);
+      const now = Math.floor(Date.now() / 1000);
+      const startDate = new Date(now * 1000);
+      const endDate = new Date((now + days * 86400) * 1000);
+      const startTime = new BN(now);
+      const endTime = new BN(now + days * 86400);
+
+      const txSignature = await rentItem(connection, anchorWallet, listingPDA, startTime, endTime);
+
+      // Record rent in backend
+      if (authToken && post.id) {
+        try {
+          await createRent(
+            authToken,
+            post.id,
+            startDate.toISOString().split('T')[0],
+            endDate.toISOString().split('T')[0],
+            txSignature,
+          );
+        } catch (backendErr) {
+          console.warn("Rent saved on-chain but backend record failed:", backendErr);
+        }
+      }
 
       setRentStep("done");
     } catch (err) {
@@ -273,6 +314,40 @@ export default function ListingPage() {
               </div>
             </div>
 
+            {/* Days selector */}
+            <div
+              className="rounded-[18px] px-5 py-4"
+              style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
+            >
+              <p className="text-[11px] uppercase tracking-wider mb-3" style={{ color: "var(--text-4)" }}>Количество дней</p>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setDays((d) => Math.max(1, d - 1))}
+                  className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-lg cursor-pointer"
+                  style={{ background: "var(--surface-2)", color: "var(--text-2)", border: "1px solid var(--border)" }}
+                >−</button>
+                <span className="text-xl font-black w-10 text-center" style={{ color: "var(--text-1)" }}>{days}</span>
+                <button
+                  onClick={() => setDays((d) => Math.min(30, d + 1))}
+                  className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-lg cursor-pointer"
+                  style={{ background: "var(--surface-2)", color: "var(--text-2)", border: "1px solid var(--border)" }}
+                >+</button>
+                <div className="ml-auto text-right">
+                  <p className="text-sm font-bold" style={{ color: "var(--text-1)" }}>
+                    {(priceNum * days).toFixed(4)} SOL
+                  </p>
+                  <p className="text-xs" style={{ color: "var(--text-3)" }}>+ {depositNum} SOL залог</p>
+                </div>
+              </div>
+              <div className="mt-2 pt-2" style={{ borderTop: "1px solid var(--border)" }}>
+                <p className="text-xs" style={{ color: "var(--text-3)" }}>
+                  Итого к блокировке: <span className="font-semibold" style={{ color: "var(--text-1)" }}>
+                    {(priceNum * days + depositNum).toFixed(4)} SOL
+                  </span>
+                </p>
+              </div>
+            </div>
+
             {/* Description */}
             {post.description && (
               <div
@@ -333,7 +408,7 @@ export default function ListingPage() {
                 style={{ background: "rgba(5,150,105,0.08)", border: "1px solid rgba(5,150,105,0.2)" }}
               >
                 <CheckCircle2 size={15} style={{ color: "#059669" }} />
-                <p className="text-sm font-semibold" style={{ color: "#059669" }}>Аренда оформлена на 7 дней!</p>
+                <p className="text-sm font-semibold" style={{ color: "#059669" }}>Аренда оформлена на {days} {days === 1 ? "день" : days < 5 ? "дня" : "дней"}!</p>
               </div>
             )}
 
@@ -361,12 +436,12 @@ export default function ListingPage() {
                   ? "Недоступно"
                   : !address
                   ? <><User size={16} /> Подключить кошелёк</>
-                  : <><Coins size={16} /> Арендовать — {priceNum} SOL/день</>
+                  : <><Coins size={16} /> Арендовать на {days} {days === 1 ? "день" : days < 5 ? "дня" : "дней"} — {(priceNum * days + depositNum).toFixed(4)} SOL</>
               )}
             </button>
 
             <p className="text-[11px] text-center" style={{ color: "var(--text-4)" }}>
-              Аренда на 7 дней · залог {depositNum} SOL будет заблокирован в смарт-контракте
+              Аренда на {days} {days === 1 ? "день" : days < 5 ? "дня" : "дней"} · залог {depositNum} SOL будет заблокирован в смарт-контракте
             </p>
           </div>
         </div>

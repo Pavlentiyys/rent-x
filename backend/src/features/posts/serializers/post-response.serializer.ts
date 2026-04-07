@@ -46,6 +46,8 @@ export class PostResponseDto {
   currencyMint: string;
   @ApiPropertyOptional({ nullable: true })
   location: string | null;
+  @ApiPropertyOptional({ nullable: true })
+  contactInfo: string | null;
   @ApiProperty()
   status: string;
   @ApiPropertyOptional({ nullable: true })
@@ -95,6 +97,7 @@ export function serializePost(post: Post): PostResponseDto {
     depositAmount: post.depositAmount,
     currencyMint: post.currencyMint,
     location: post.location,
+    contactInfo: post.contactInfo ?? null,
     status: post.status,
     availableFrom: post.availableFrom?.toISOString() ?? null,
     availableTo: post.availableTo?.toISOString() ?? null,

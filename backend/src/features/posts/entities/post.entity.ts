@@ -51,6 +51,9 @@ export class Post {
   @Column({ type: 'varchar', length: 255, nullable: true })
   location: string | null;
 
+  @Column({ type: 'varchar', length: 500, nullable: true })
+  contactInfo: string | null;
+
   @Column({
     type: 'enum',
     enum: PostStatus,

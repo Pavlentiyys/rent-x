@@ -1,6 +1,6 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsDateString, IsInt, Min } from 'class-validator';
+import { IsDateString, IsInt, IsOptional, IsString, Min } from 'class-validator';
 
 export class CreateRentDto {
   @ApiProperty({ example: 42 })
@@ -16,4 +16,9 @@ export class CreateRentDto {
   @ApiProperty({ example: '2026-04-17' })
   @IsDateString()
   endDate: string;
+
+  @ApiPropertyOptional({ example: '5J3mBbAH...' })
+  @IsOptional()
+  @IsString()
+  paymentTxSignature?: string;
 }

@@ -19,6 +19,7 @@ export enum RentStatus {
   Rejected = 'rejected',
   Paid = 'paid',
   Active = 'active',
+  ReturnRequested = 'return_requested',
   Completed = 'completed',
   Cancelled = 'cancelled',
   Disputed = 'disputed',

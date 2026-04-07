@@ -17,6 +17,7 @@ import {
   ImagePlus,
   X,
   AlertCircle,
+  Phone,
 } from "lucide-react";
 import { useConnection, useAnchorWallet } from "@solana/wallet-adapter-react";
 import { LAMPORTS_PER_SOL } from "@solana/web3.js";
@@ -50,7 +51,7 @@ interface PendingImage {
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
 export default function CreateListingPage() {
-  const { connected, authToken } = useWalletContext();
+  const { connected, authToken, siwsError, retryAuth } = useWalletContext();
   const { connection } = useConnection();
   const anchorWallet = useAnchorWallet();
   const router = useRouter();
@@ -59,7 +60,7 @@ export default function CreateListingPage() {
   const [form, setForm] = useState({
     title: "", description: "", category: "",
     pricePerDay: "", depositAmount: "",
-    location: "", availableFrom: "", availableTo: "",
+    location: "", contactInfo: "", availableFrom: "", availableTo: "",
   });
   const [images, setImages] = useState<PendingImage[]>([]);
   const [loading, setLoading] = useState(false);
@@ -111,11 +112,18 @@ export default function CreateListingPage() {
       const img = images[i];
       setImages((prev) => prev.map((x) => x.localId === img.localId ? { ...x, uploading: true, error: null } : x));
       try {
+        console.log(`[upload] [${i+1}/${images.length}] Запрос presigned URL для "${img.file.name}" (${img.file.type}, ${img.file.size} bytes)`);
         const { objectKey, uploadUrl, fileUrl } = await getUploadUrl(authToken, img.file.name, img.file.type, img.file.size);
+        console.log(`[upload] presigned URL получен → objectKey=${objectKey} uploadUrl=${uploadUrl}`);
+
+        console.log(`[upload] PUT ${uploadUrl}`);
         await uploadFileToStorage(uploadUrl, img.file);
+        console.log(`[upload] успешно загружено → fileUrl=${fileUrl}`);
+
         result.push({ objectKey, url: fileUrl, sortOrder: i });
         setImages((prev) => prev.map((x) => x.localId === img.localId ? { ...x, uploading: false } : x));
       } catch (err) {
+        console.error(`[upload] ошибка для "${img.file.name}":`, err);
         const msg = err instanceof Error ? err.message : "Ошибка загрузки";
         setImages((prev) => prev.map((x) => x.localId === img.localId ? { ...x, uploading: false, error: msg } : x));
         throw new Error(`Не удалось загрузить "${img.file.name}": ${msg}`);
@@ -180,6 +188,7 @@ export default function CreateListingPage() {
         currencyMint: SOL_MINT,
         status: "active",
         location: form.location || undefined,
+        contactInfo: form.contactInfo || undefined,
         availableFrom: form.availableFrom ? new Date(form.availableFrom).toISOString() : undefined,
         availableTo: form.availableTo ? new Date(form.availableTo).toISOString() : undefined,
         images: uploadedImages.length > 0 ? uploadedImages : undefined,
@@ -195,6 +204,28 @@ export default function CreateListingPage() {
   };
 
   const isUploading = images.some((i) => i.uploading);
+
+  if (connected && !authToken) {
+    return (
+      <div style={{ minHeight: "100vh", background: "var(--page-bg)" }}>
+        <Header />
+        <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 px-4">
+          <p className="text-base font-semibold text-center" style={{ color: "var(--text-1)" }}>
+            {siwsError ?? "Выполняется аутентификация кошелька…"}
+          </p>
+          {siwsError && (
+            <button
+              onClick={retryAuth}
+              className="px-6 py-2.5 rounded-full text-sm font-semibold"
+              style={{ background: "linear-gradient(135deg, #2B44D0, #1B2BB8)", color: "#fff" }}
+            >
+              Повторить
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   if (success) {
     return (
@@ -334,6 +365,7 @@ export default function CreateListingPage() {
                 { key: "pricePerDay",   label: "Цена за день (SOL)", placeholder: "0.5",                icon: Coins,      required: true,  type: "number", hint: "Например: 0.5" },
                 { key: "depositAmount", label: "Залог (SOL)",        placeholder: "2.0",                icon: ShieldCheck, required: true, type: "number", hint: "Возвращается после" },
                 { key: "location",      label: "Местоположение",     placeholder: "Алматы, Казахстан",  icon: MapPin,     required: false },
+                { key: "contactInfo",   label: "Контакты для связи", placeholder: "Telegram: @username, WhatsApp: +7 777 123 45 67", icon: Phone, required: false, hint: "Покажем арендатору после оплаты" },
                 { key: "availableFrom", label: "Доступно с",         placeholder: "",                   icon: Calendar,   required: false, type: "date" },
                 { key: "availableTo",   label: "Доступно до",        placeholder: "",                   icon: Calendar,   required: false, type: "date" },
               ] as { key: string; label: string; placeholder: string; icon: React.ElementType; required: boolean; type?: string; hint?: string }[]

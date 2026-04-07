@@ -11,6 +11,12 @@ const nextConfig: NextConfig = {
         pathname: "/**",
       },
       {
+        // Railway Minio
+        protocol: "https",
+        hostname: "minio-production-9654.up.railway.app",
+        pathname: "/**",
+      },
+      {
         // Any HTTPS CDN / production storage
         protocol: "https",
         hostname: "**",

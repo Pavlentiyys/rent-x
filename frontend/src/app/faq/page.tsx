@@ -225,7 +225,7 @@ export default function FaqPage() {
             </p>
             <div className="flex items-center justify-center gap-3 flex-wrap">
               <a
-                href="https://t.me/rentx_support"
+                href="https://t.me/mirceya"
                 className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold text-white transition-all hover:opacity-80"
                 style={{ background: "linear-gradient(135deg, #2B44D0 0%, #1B2BB8 100%)" }}
               >

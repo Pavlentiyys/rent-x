@@ -1,6 +1,7 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { motion, useInView } from "framer-motion";
 import { useWalletContext } from "@/components/ui/WalletContext";
 import { useLanguage } from "@/components/LanguageProvider";
@@ -11,18 +12,16 @@ type RentState = "idle" | "signing" | "done";
 function CatalogCard({ item, index, inView }: { item: Post; index: number; inView: boolean }) {
   const { address, openModal } = useWalletContext();
   const { t } = useLanguage();
-  const [rentState, setRentState] = useState<RentState>("idle");
+  const router = useRouter();
+  const [rentState] = useState<RentState>("idle");
 
   const imageUrl = item.images?.[0]?.url || `https://picsum.photos/seed/item-${item.id}/400/220`;
   const isAvailable = item.status === "active";
 
-  const handleRent = async () => {
+  const handleRent = () => {
     if (!address) { openModal(); return; }
     if (!isAvailable) return;
-    setRentState("signing");
-    await new Promise((r) => setTimeout(r, 1800));
-    setRentState("done");
-    setTimeout(() => setRentState("idle"), 3000);
+    router.push(`/listing/${item.id}`);
   };
 
   return (
@@ -101,7 +100,7 @@ function CatalogCard({ item, index, inView }: { item: Post; index: number; inVie
           </div>
           <div className="text-right">
             <div className="text-[13px] font-semibold" style={{ color: "var(--text-2)" }}>
-              {item.deposit} SOL
+              {item.depositAmount} SOL
             </div>
             <div className="text-[11px]" style={{ color: "var(--text-3)" }}>{t.catalog.deposit}</div>
           </div>

@@ -7,7 +7,6 @@ import {
   WalletProvider,
 } from '@solana/wallet-adapter-react';
 import {
-  PhantomWalletAdapter,
   SolflareWalletAdapter,
 } from '@solana/wallet-adapter-wallets';
 
@@ -24,11 +23,9 @@ export function SolanaProviders({ children }: { children: React.ReactNode }) {
   // @solana/wallet-adapter-wallets includes all the adapters but
   // the tree is not shaken well yet so you may want to just import
   // the wallets you want to support.
+  // PhantomWalletAdapter removed — Phantom supports Wallet Standard natively
   const wallets = useMemo(
-    () => [
-      new PhantomWalletAdapter(),
-      new SolflareWalletAdapter(),
-    ],
+    () => [new SolflareWalletAdapter()],
     []
   );
 
