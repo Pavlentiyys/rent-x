@@ -31,31 +31,38 @@ export class FilesService implements OnModuleInit {
   }
 
   async onModuleInit() {
-    const bucketExists = await this.client.bucketExists(this.bucketName);
+    try {
+      const bucketExists = await this.client.bucketExists(this.bucketName);
 
-    if (!bucketExists) {
-      await this.client.makeBucket(this.bucketName);
-      this.logger.log(
-        JSON.stringify({
-          event: 'files.bucket_created',
-          bucket: this.bucketName,
-        }),
+      if (!bucketExists) {
+        await this.client.makeBucket(this.bucketName);
+        this.logger.log(
+          JSON.stringify({
+            event: 'files.bucket_created',
+            bucket: this.bucketName,
+          }),
+        );
+      }
+
+      // Set public read policy so uploaded images are accessible without auth
+      const policy = JSON.stringify({
+        Version: '2012-10-17',
+        Statement: [
+          {
+            Effect: 'Allow',
+            Principal: { AWS: ['*'] },
+            Action: ['s3:GetObject'],
+            Resource: [`arn:aws:s3:::${this.bucketName}/*`],
+          },
+        ],
+      });
+      await this.client.setBucketPolicy(this.bucketName, policy);
+      this.logger.log(JSON.stringify({ event: 'files.minio_ready', bucket: this.bucketName }));
+    } catch (err) {
+      this.logger.warn(
+        JSON.stringify({ event: 'files.minio_unavailable', error: String(err) }),
       );
     }
-
-    // Set public read policy so uploaded images are accessible without auth
-    const policy = JSON.stringify({
-      Version: '2012-10-17',
-      Statement: [
-        {
-          Effect: 'Allow',
-          Principal: { AWS: ['*'] },
-          Action: ['s3:GetObject'],
-          Resource: [`arn:aws:s3:::${this.bucketName}/*`],
-        },
-      ],
-    });
-    await this.client.setBucketPolicy(this.bucketName, policy);
   }
 
   async createUploadUrl(dto: CreateFileUploadDto, ownerId: number) {
