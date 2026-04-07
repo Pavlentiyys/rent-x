@@ -149,7 +149,7 @@ export const Catalog = () => {
     if (!inView || items.length > 0) return;
 
     fetchPosts(1, 6)
-      .then((res) => setItems(res.data))
+      .then((res) => setItems(res.items))
       .catch((err) => {
         console.error("Failed to fetch catalog items:", err);
         setItems([]);

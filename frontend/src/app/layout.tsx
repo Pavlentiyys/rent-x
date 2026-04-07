@@ -4,6 +4,7 @@ import { LanguageProvider } from "@/components/LanguageProvider";
 import { SolanaProviders } from "./providers";
 import { WalletProvider } from "@/components/ui/WalletContext";
 import { WalletConnectModal } from "@/components/ui/WalletConnectModal";
+import { KycModal } from "@/components/ui/KycModal";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -34,6 +35,7 @@ export default function RootLayout({
               <LanguageProvider>
                 {children}
                 <WalletConnectModal />
+                <KycModal />
               </LanguageProvider>
             </ThemeProvider>
           </WalletProvider>

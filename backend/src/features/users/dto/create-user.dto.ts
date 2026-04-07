@@ -30,4 +30,8 @@ export class CreateUserDto {
   @IsString()
   @MaxLength(1000)
   bio?: string;
+
+  @IsOptional()
+  @IsUrl()
+  documentUrl?: string;
 }

@@ -37,6 +37,9 @@ export class User {
   @Column({ default: 0 })
   reviewsCount: number;
 
+  @Column({ type: 'varchar', nullable: true })
+  documentUrl: string | null;
+
   @Column({ default: false })
   isVerified: boolean;
 

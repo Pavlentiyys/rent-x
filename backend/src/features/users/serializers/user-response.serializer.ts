@@ -5,6 +5,9 @@ export class UserProfileResponseDto {
   @ApiProperty()
   id: number;
 
+  @ApiProperty()
+  walletAddress: string;
+
   @ApiPropertyOptional({ nullable: true })
   username: string | null;
 
@@ -16,6 +19,9 @@ export class UserProfileResponseDto {
 
   @ApiPropertyOptional({ nullable: true })
   bio: string | null;
+
+  @ApiPropertyOptional({ nullable: true })
+  documentUrl: string | null;
 
   @ApiProperty()
   rating: number;
@@ -33,18 +39,17 @@ export class UserProfileResponseDto {
   updatedAt: string;
 }
 
-export class CurrentUserResponseDto extends UserProfileResponseDto {
-  @ApiProperty()
-  walletAddress: string;
-}
+export class CurrentUserResponseDto extends UserProfileResponseDto {}
 
 export function serializeUserProfile(user: User): UserProfileResponseDto {
   return {
     id: user.id,
+    walletAddress: user.walletAddress,
     username: user.username,
     displayName: user.displayName,
     avatarUrl: user.avatarUrl,
     bio: user.bio,
+    documentUrl: user.documentUrl,
     rating: Number(user.rating),
     reviewsCount: user.reviewsCount,
     isVerified: user.isVerified,

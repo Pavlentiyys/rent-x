@@ -10,13 +10,16 @@ import {
   PhantomWalletAdapter,
   SolflareWalletAdapter,
 } from '@solana/wallet-adapter-wallets';
-import { clusterApiUrl } from '@solana/web3.js';
 
-const network = 'devnet';
+// Use NEXT_PUBLIC_RPC_URL if set, otherwise fall back to Ankr public devnet
+// (Ankr has significantly better rate limits than api.devnet.solana.com)
+const DEFAULT_RPC = 'https://rpc.ankr.com/solana_devnet';
 
 export function SolanaProviders({ children }: { children: React.ReactNode }) {
-  // The network can be set to 'devnet', 'testnet', or 'mainnet-beta'.
-  const endpoint = useMemo(() => clusterApiUrl(network as any), []);
+  const endpoint = useMemo(
+    () => process.env.NEXT_PUBLIC_RPC_URL ?? DEFAULT_RPC,
+    [],
+  );
 
   // @solana/wallet-adapter-wallets includes all the adapters but
   // the tree is not shaken well yet so you may want to just import

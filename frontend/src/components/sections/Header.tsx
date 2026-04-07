@@ -1,33 +1,24 @@
 "use client";
 import Link from "next/link";
-import { Sun, Moon, LogOut } from "lucide-react";
+import { Sun, Moon, User } from "lucide-react";
 import { useTheme } from "@/components/ThemeProvider";
 import { useLanguage, type Lang } from "@/components/LanguageProvider";
 import { useWalletContext } from "@/components/ui/WalletContext";
-import { motion, AnimatePresence, useScroll, useMotionValueEvent } from "framer-motion";
-import { useState } from "react";
+import { motion } from "framer-motion";
 
 const LANGS: Lang[] = ["en", "kz", "ru"];
 
 export const Header = () => {
   const { theme, toggleTheme } = useTheme();
-  const { address, connecting, openModal, disconnect } = useWalletContext();
+  const { address, connecting, openModal } = useWalletContext();
   const { lang, setLang, t } = useLanguage();
-  const [scrolled, setScrolled] = useState(false);
-
-  const { scrollY } = useScroll();
-  useMotionValueEvent(scrollY, "change", (y) => setScrolled(y > 24));
 
   const short = address ? `${address.slice(0, 4)}…${address.slice(-4)}` : null;
 
   return (
     <header className="sticky top-0 z-50 w-full px-4 py-3">
-      <motion.div
-        className="mx-auto flex items-center gap-3 h-12"
-        animate={{ maxWidth: scrolled ? "560px" : "1280px" }}
-        transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
-      >
-        {/* floating pill */}
+      <div className="max-w-7xl mx-auto flex items-center gap-3 h-12">
+        {/* main pill */}
         <div
           className="flex-1 flex items-center justify-between px-5 h-full rounded-full overflow-hidden"
           style={{
@@ -40,57 +31,47 @@ export const Header = () => {
         >
           {/* logo */}
           <Link href="/" className="flex items-center shrink-0">
-            <span className="text-[15px] font-bold tracking-tight text-gray-900 dark:text-white">
+            <span className="text-[15px] font-bold tracking-tight" style={{ color: "var(--text-1)" }}>
               RentX
             </span>
           </Link>
 
-          {/* navigation hides on scroll */}
-          <AnimatePresence>
-            {!scrolled && (
-              <motion.nav
-                className="hidden md:flex items-center gap-7"
-                initial={{ opacity: 0, width: 0 }}
-                animate={{ opacity: 1, width: "auto" }}
-                exit={{ opacity: 0, width: 0 }}
-                transition={{ duration: 0.25, ease: "easeInOut" }}
-                style={{ overflow: "hidden", whiteSpace: "nowrap" }}
+          {/* navigation */}
+          <nav className="hidden md:flex items-center gap-7">
+            {[
+              { href: "/#catalog",    label: t.nav.catalog },
+              { href: "/marketplace", label: t.nav.marketplace },
+              { href: "/faq",         label: t.nav.faq },
+            ].map(({ href, label }) => (
+              <Link
+                key={href}
+                href={href}
+                className="text-sm font-medium transition-colors duration-150 cursor-pointer hover:opacity-80"
+                style={{ color: "var(--text-3)" }}
               >
-                {[
-                  { href: "/#catalog",      label: t.nav.catalog },
-                  { href: "/marketplace",   label: t.nav.marketplace },
-                  { href: "/#how-it-works", label: t.nav.forHosts },
-                ].map(({ href, label }) => (
-                  <Link
-                    key={href}
-                    href={href}
-                    className="text-sm font-medium transition-colors duration-150 cursor-pointer"
-                    style={{ color: "var(--text-3)" }}
-                  >
-                    {label}
-                  </Link>
-                ))}
-              </motion.nav>
-            )}
-          </AnimatePresence>
+                {label}
+              </Link>
+            ))}
+          </nav>
 
-          {/* connect Wallet / connected */}
+          {/* wallet */}
           {address ? (
-            <motion.button
-              whileHover={{ scale: 1.04, opacity: 0.9 }}
-              whileTap={{ scale: 0.96 }}
-              onClick={disconnect}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold shrink-0 cursor-pointer"
-              style={{
-                background: "rgba(16,185,129,0.1)",
-                border: "1px solid rgba(16,185,129,0.25)",
-                color: "#059669",
-              }}
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse shrink-0" />
-              <span className="font-mono">{short}</span>
-              <LogOut size={12} />
-            </motion.button>
+            <Link href="/dashboard">
+              <motion.div
+                whileHover={{ scale: 1.04, opacity: 0.9 }}
+                whileTap={{ scale: 0.96 }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold shrink-0 cursor-pointer"
+                style={{
+                  background: "rgba(16,185,129,0.1)",
+                  border: "1px solid rgba(16,185,129,0.25)",
+                  color: "#059669",
+                }}
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse shrink-0" />
+                <span className="font-mono">{short}</span>
+                <User size={12} />
+              </motion.div>
+            </Link>
           ) : (
             <motion.button
               whileHover={{ scale: 1.04, boxShadow: "0 4px 18px rgba(27,43,184,0.55)" }}
@@ -103,7 +84,6 @@ export const Header = () => {
                 boxShadow: "0 2px 10px rgba(27,43,184,0.35)",
               }}
             >
-              {/* solana logo official 3-bar mark */}
               <svg width="16" height="13" viewBox="0 0 96 78" fill="none" className="shrink-0">
                 <defs>
                   <linearGradient id="sg" x1="0" y1="39" x2="96" y2="39" gradientUnits="userSpaceOnUse">
@@ -139,11 +119,7 @@ export const Header = () => {
               className="w-9 h-9 rounded-full text-[11px] font-bold uppercase tracking-wide transition-all duration-200 cursor-pointer"
               style={
                 lang === l
-                  ? {
-                      background: "linear-gradient(135deg, #2B44D0 0%, #1B2BB8 100%)",
-                      color: "#fff",
-                      boxShadow: "0 2px 8px rgba(27,43,184,0.35)",
-                    }
+                  ? { background: "linear-gradient(135deg, #2B44D0 0%, #1B2BB8 100%)", color: "#fff", boxShadow: "0 2px 8px rgba(27,43,184,0.35)" }
                   : { color: "var(--text-3)" }
               }
             >
@@ -170,7 +146,7 @@ export const Header = () => {
         >
           {theme === "light" ? <Moon size={16} /> : <Sun size={16} />}
         </motion.button>
-      </motion.div>
+      </div>
     </header>
   );
 };

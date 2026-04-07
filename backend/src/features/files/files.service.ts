@@ -42,6 +42,20 @@ export class FilesService implements OnModuleInit {
         }),
       );
     }
+
+    // Set public read policy so uploaded images are accessible without auth
+    const policy = JSON.stringify({
+      Version: '2012-10-17',
+      Statement: [
+        {
+          Effect: 'Allow',
+          Principal: { AWS: ['*'] },
+          Action: ['s3:GetObject'],
+          Resource: [`arn:aws:s3:::${this.bucketName}/*`],
+        },
+      ],
+    });
+    await this.client.setBucketPolicy(this.bucketName, policy);
   }
 
   async createUploadUrl(dto: CreateFileUploadDto, ownerId: number) {

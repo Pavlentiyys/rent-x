@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 export type Lang = "en" | "kz" | "ru";
 
 export type Translations = {
-  nav: { catalog: string; marketplace: string; forHosts: string };
+  nav: { catalog: string; marketplace: string; faq: string };
   wallet: { connecting: string; connect: string };
   hero: { title: string; subtitle: string; startRenting: string; listItem: string };
   stats: { finalization: string; fee: string; activeRentals: string; escrowCollateral: string };
@@ -48,7 +48,7 @@ export type Translations = {
 
 const translations: Record<Lang, Translations> = {
   ru: {
-    nav: { catalog: "Каталог", marketplace: "Маркетплейс", forHosts: "Для хостов" },
+    nav: { catalog: "Каталог", marketplace: "Маркетплейс", faq: "FAQ" },
     wallet: { connecting: "Подключение…", connect: "Connect Wallet" },
     hero: {
       title: "Превратите свои активы в\nпоток пассивного дохода.",
@@ -114,14 +114,14 @@ const translations: Record<Lang, Translations> = {
       description: "Децентрализованная платформа быстрой аренды на блокчейне Solana. Никаких бумаг — только подпись.",
       platform: "Платформа",
       development: "Разработка",
-      platformLinks: ["Каталог", "Маркетплейс", "Для хостов", "Dashboard"],
+      platformLinks: ["Каталог", "Маркетплейс", "FAQ", "Dashboard"],
       devLinks: ["Документация", "Smart Contract", "GitHub", "Devnet Explorer"],
       rights: "2026 RentX. Все права защищены.",
       stats: "Solana · ~400мс · $0.00025 комиссия",
     },
   },
   en: {
-    nav: { catalog: "Catalog", marketplace: "Marketplace", forHosts: "For Hosts" },
+    nav: { catalog: "Catalog", marketplace: "Marketplace", faq: "FAQ" },
     wallet: { connecting: "Connecting…", connect: "Connect Wallet" },
     hero: {
       title: "Turn your assets into\na passive income stream.",
@@ -187,14 +187,14 @@ const translations: Record<Lang, Translations> = {
       description: "Decentralized fast rental platform on the Solana blockchain. No paperwork — just a signature.",
       platform: "Platform",
       development: "Development",
-      platformLinks: ["Catalog", "Marketplace", "For Hosts", "Dashboard"],
+      platformLinks: ["Catalog", "Marketplace", "FAQ", "Dashboard"],
       devLinks: ["Documentation", "Smart Contract", "GitHub", "Devnet Explorer"],
       rights: "2026 RentX. All rights reserved.",
       stats: "Solana · ~400ms · $0.00025 fee",
     },
   },
   kz: {
-    nav: { catalog: "Каталог", marketplace: "Нарық", forHosts: "Хосттарға" },
+    nav: { catalog: "Каталог", marketplace: "Нарық", faq: "FAQ" },
     wallet: { connecting: "Қосылуда…", connect: "Connect Wallet" },
     hero: {
       title: "Активтеріңізді пассивті\nтабыс ағынына айналдырыңыз.",
@@ -260,7 +260,7 @@ const translations: Record<Lang, Translations> = {
       description: "Solana блокчейніндегі жылдам жалдаудың орталықсыздандырылған платформасы. Ешқандай қағаз — тек қолтаңба.",
       platform: "Платформа",
       development: "Әзірлеу",
-      platformLinks: ["Каталог", "Нарық", "Хосттарға", "Dashboard"],
+      platformLinks: ["Каталог", "Нарық", "FAQ", "Dashboard"],
       devLinks: ["Құжаттама", "Smart Contract", "GitHub", "Devnet Explorer"],
       rights: "2026 RentX. Барлық құқықтар қорғалған.",
       stats: "Solana · ~400мс · $0.00025 комиссия",

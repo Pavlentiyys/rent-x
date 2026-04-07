@@ -41,7 +41,7 @@ export class CreatePostImageDto {
   objectKey: string;
 
   @ApiProperty({ example: 'https://files.example.com/posts/1/camera.jpg' })
-  @IsUrl()
+  @IsUrl({ require_tld: false })
   url: string;
 
   @ApiPropertyOptional({ example: 0 })
